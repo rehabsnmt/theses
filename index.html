@@ -11,7 +11,7 @@
         h1 { color: #1e40af; text-align: center; margin-top: 0; }
         
         /* Form & Input */
-        input, select, button { padding: 10px 12px; margin: 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; }
+        input, select, button { padding: 10px 12px; margin: 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; }
         input:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
         
         /* Buttons */
@@ -48,9 +48,9 @@
 
 <div class="container">
     <div class="header-actions">
-        <h1 style="margin: 0;">📚 Hệ Thống Luận Văn</h1>
+        <h1 style="margin: 0;">Hệ Thống Luận Văn</h1>
         <div>
-            <button id="btnLoginShow">Admin Login</button>
+            <button id="btnLoginShow">Đăng nhập Admin</button>
             <button id="btnLogout" class="btn-danger hidden">Đăng xuất</button>
         </div>
     </div>
@@ -58,15 +58,15 @@
     <!-- Khung Đăng nhập (Mặc định ẩn) -->
     <div id="loginSection" class="section-box hidden" style="max-width: 400px; margin: 0 auto 20px auto;">
         <h3 style="margin-top: 0; text-align: center;">Đăng nhập Quản trị viên</h3>
-        <input type="email" id="email" placeholder="Email admin" style="width: 90%;">
-        <input type="password" id="password" placeholder="Mật khẩu" style="width: 90%;">
-        <button id="btnLoginSubmit" style="width: 95%;">Đăng nhập</button>
+        <input type="email" id="email" placeholder="Email admin" style="width: 100%;">
+        <input type="password" id="password" placeholder="Mật khẩu" style="width: 100%;">
+        <button id="btnLoginSubmit" style="width: 100%;">Đăng nhập</button>
     </div>
 
     <!-- Khung Thêm/Sửa Đề Tài (Chỉ Admin mới thấy) -->
     <div id="adminSection" class="section-box hidden">
         <h3 style="margin-top: 0;">
-            <span id="formTitle">➕ Thêm đề tài mới</span>
+            <span id="formTitle">Thêm đề tài mới</span>
             <span id="editModeBadge" class="hidden">Đang sửa dữ liệu</span>
         </h3>
         
@@ -76,38 +76,42 @@
         <div class="form-grid">
             <div class="form-group" style="grid-column: span 2;">
                 <label>Tên đề tài *</label>
-                <input type="text" id="addTitle" placeholder="Nhập tên đề tài..." style="width: 95%;">
+                <input type="text" id="addTitle" placeholder="Nhập tên đề tài..." style="width: 100%;">
             </div>
             <div class="form-group">
                 <label>Tác giả *</label>
-                <input type="text" id="addAuthor" placeholder="Họ và tên sinh viên" style="width: 90%;">
+                <input type="text" id="addAuthor" placeholder="Họ và tên sinh viên" style="width: 100%;">
             </div>
             <div class="form-group">
                 <label>Lớp *</label>
-                <input type="text" id="addClass" placeholder="VD: K64-CNTT" style="width: 90%;">
+                <div style="display: flex; gap: 5px;">
+                    <select id="addLevel" style="width: 55%; margin: 5px 0;">
+                        <option value="Cử nhân">Cử nhân</option>
+                        <option value="Thạc sĩ">Thạc sĩ</option>
+                    </select>
+                    <select id="addYear" style="width: 45%; margin: 5px 0;">
+                        <!-- JS sẽ tự động điền năm vào đây -->
+                    </select>
+                </div>
             </div>
             <div class="form-group">
                 <label>GV Hướng dẫn *</label>
-                <input type="text" id="addAdvisor" placeholder="Tên giảng viên" style="width: 90%;">
+                <input type="text" id="addAdvisor" placeholder="Tên giảng viên" style="width: 100%;">
             </div>
             <div class="form-group">
-                <label>Chuyên ngành</label>
-                <select id="addCategory" style="width: 95%;">
-                    <option value="Công nghệ phần mềm">Công nghệ phần mềm</option>
-                    <option value="Trí tuệ nhân tạo">Trí tuệ nhân tạo</option>
-                    <option value="Hệ thống thông tin">Hệ thống thông tin</option>
-                    <option value="Mạng máy tính">Mạng máy tính</option>
-                    <option value="Khoa học dữ liệu">Khoa học dữ liệu</option>
-                    <option value="An toàn thông tin">An toàn thông tin</option>
+                <label>Phân loại</label>
+                <select id="addCategory" style="width: 100%;">
+                    <option value="Bộ câu hỏi">Bộ câu hỏi</option>
+                    <option value="Khác">Khác</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>&nbsp;</label>
-                <button id="btnSaveData">💾 Lưu Dữ Liệu</button>
+                <button id="btnSaveData">Lưu dữ liệu</button>
             </div>
-            <div class="form-group" id="btnCancelEditContainer" class="hidden">
+            <div class="form-group hidden" id="btnCancelEditContainer">
                 <label>&nbsp;</label>
-                <button id="btnCancelEdit" class="btn-danger hidden">Hủy sửa</button>
+                <button id="btnCancelEdit" class="btn-danger">Hủy sửa</button>
             </div>
         </div>
     </div>
@@ -115,17 +119,13 @@
     <!-- Tìm kiếm và Lọc -->
     <div class="form-grid" style="background: white; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px;">
         <div class="form-group" style="grid-column: span 3;">
-            <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm theo tên đề tài, tác giả, lớp hoặc GVHD..." style="width: 98%;">
+            <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên đề tài, tác giả, lớp hoặc GVHD..." style="width: 100%;">
         </div>
         <div class="form-group">
-            <select id="filterSelect" style="width: 95%;">
-                <option value="Tất cả">Tất cả chuyên ngành</option>
-                <option value="Công nghệ phần mềm">Công nghệ phần mềm</option>
-                <option value="Trí tuệ nhân tạo">Trí tuệ nhân tạo</option>
-                <option value="Hệ thống thông tin">Hệ thống thông tin</option>
-                <option value="Mạng máy tính">Mạng máy tính</option>
-                <option value="Khoa học dữ liệu">Khoa học dữ liệu</option>
-                <option value="An toàn thông tin">An toàn thông tin</option>
+            <select id="filterSelect" style="width: 100%;">
+                <option value="Tất cả">Tất cả phân loại</option>
+                <option value="Bộ câu hỏi">Bộ câu hỏi</option>
+                <option value="Khác">Khác</option>
             </select>
         </div>
     </div>
@@ -140,12 +140,12 @@
                     <th>Sinh Viên</th>
                     <th>Lớp</th>
                     <th>GV Hướng Dẫn</th>
-                    <th>Chuyên Ngành</th>
+                    <th>Phân Loại</th>
                     <th id="thAction" class="hidden" style="text-align: center;">Hành động</th>
                 </tr>
             </thead>
             <tbody id="dataTableBody">
-                <tr><td colspan="7" style="text-align: center; padding: 30px;">⏳ Đang tải dữ liệu từ máy chủ...</td></tr>
+                <tr><td colspan="7" style="text-align: center; padding: 30px;">Đang tải dữ liệu từ máy chủ...</td></tr>
             </tbody>
         </table>
     </div>
@@ -176,31 +176,54 @@
     // Biến toàn cục
     let allTheses = [];
     let isAdmin = false;
-    let isEditing = false; // Trạng thái đang sửa hay đang thêm mới
+    let isEditing = false; 
 
     // Elements
     const tableBody = document.getElementById('dataTableBody');
     const thAction = document.getElementById('thAction');
     
-    // Auth Elements
     const loginSection = document.getElementById('loginSection');
     const adminSection = document.getElementById('adminSection');
     const btnLoginShow = document.getElementById('btnLoginShow');
     const btnLogout = document.getElementById('btnLogout');
     
-    // Form Elements
     const addTitle = document.getElementById('addTitle');
     const addAuthor = document.getElementById('addAuthor');
-    const addClass = document.getElementById('addClass');
+    const addLevel = document.getElementById('addLevel');
+    const addYear = document.getElementById('addYear');
     const addAdvisor = document.getElementById('addAdvisor');
     const addCategory = document.getElementById('addCategory');
     const editId = document.getElementById('editId');
     
     const formTitle = document.getElementById('formTitle');
     const editModeBadge = document.getElementById('editModeBadge');
+    const btnCancelEditContainer = document.getElementById('btnCancelEditContainer');
     const btnCancelEdit = document.getElementById('btnCancelEdit');
 
-    // 1. LẮNG NGHE ĐĂNG NHẬP
+    // === LOGIC CẬP NHẬT NĂM THEO HỆ ĐÀO TẠO ===
+    function populateYears(levelType) {
+        addYear.innerHTML = '';
+        const currentYear = new Date().getFullYear();
+        const startYear = (levelType === 'Cử nhân') ? 2017 : 2019;
+        
+        for (let y = startYear; y <= currentYear; y++) {
+            const option = document.createElement('option');
+            option.value = y;
+            option.textContent = y;
+            addYear.appendChild(option);
+        }
+        addYear.value = currentYear; // Mặc định chọn năm hiện tại
+    }
+
+    // Khi thay đổi hệ (Cử nhân / Thạc sĩ) thì tính toán lại danh sách năm
+    addLevel.addEventListener('change', (e) => {
+        populateYears(e.target.value);
+    });
+
+    // Khởi tạo danh sách năm lúc vừa load web
+    populateYears('Cử nhân');
+
+    // === LẮNG NGHE ĐĂNG NHẬP ===
     onAuthStateChanged(auth, (user) => {
         if (user) {
             isAdmin = true;
@@ -211,7 +234,7 @@
             thAction.classList.remove('hidden');
         } else {
             isAdmin = false;
-            resetForm(); // Reset form nếu đăng xuất khi đang sửa dở
+            resetForm(); 
             btnLoginShow.classList.remove('hidden');
             btnLogout.classList.add('hidden');
             adminSection.classList.add('hidden');
@@ -220,13 +243,13 @@
         renderTable();
     });
 
-    // 2. TẢI DỮ LIỆU TỪ FIREBASE (Realtime)
+    // === TẢI DỮ LIỆU TỪ FIREBASE ===
     onSnapshot(collection(db, "theses"), (snapshot) => {
         allTheses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderTable();
     });
 
-    // 3. VẼ BẢNG & LỌC DỮ LIỆU
+    // === VẼ BẢNG & LỌC DỮ LIỆU ===
     function renderTable() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const filterCat = document.getElementById('filterSelect').value;
@@ -234,7 +257,7 @@
         const filtered = allTheses.filter(t => {
             const txtTitle = (t.title || '').toLowerCase();
             const txtAuthor = (t.author || '').toLowerCase();
-            const txtClass = (t.studentClass || '').toLowerCase(); // Đổi tên biến lớp thành studentClass cho tránh từ khóa class
+            const txtClass = (t.studentClass || '').toLowerCase(); 
             const txtAdvisor = (t.advisor || '').toLowerCase();
             
             const matchSearch = txtTitle.includes(searchText) || txtAuthor.includes(searchText) || txtClass.includes(searchText) || txtAdvisor.includes(searchText);
@@ -252,15 +275,13 @@
         filtered.forEach((t, index) => {
             const tr = document.createElement('tr');
             
-            // Render Nút Hành Động
             let actionHtml = '';
             if (isAdmin) {
-                // Chúng ta phải lưu trữ data vào JSON để truyền vào hàm sửa
                 const dataString = encodeURIComponent(JSON.stringify(t));
                 actionHtml = `
                     <td style="text-align: center; white-space: nowrap;">
-                        <button class="btn-sm btn-warning" onclick="triggerEdit('${dataString}')">✏️ Sửa</button>
-                        <button class="btn-sm btn-danger" onclick="deleteThesis('${t.id}')">🗑️ Xóa</button>
+                        <button class="btn-sm btn-warning" onclick="triggerEdit('${dataString}')">Sửa</button>
+                        <button class="btn-sm btn-danger" onclick="deleteThesis('${t.id}')">Xóa</button>
                     </td>
                 `;
             }
@@ -278,11 +299,10 @@
         });
     }
 
-    // Sự kiện bộ lọc
     document.getElementById('searchInput').addEventListener('input', renderTable);
     document.getElementById('filterSelect').addEventListener('change', renderTable);
 
-    // 4. XỬ LÝ AUTH (ĐĂNG NHẬP/ĐĂNG XUẤT)
+    // === XỬ LÝ ĐĂNG NHẬP/ĐĂNG XUẤT ===
     btnLoginShow.onclick = () => loginSection.classList.toggle('hidden');
     
     document.getElementById('btnLoginSubmit').onclick = () => {
@@ -297,16 +317,18 @@
 
     btnLogout.onclick = () => signOut(auth);
 
-    // 5. LƯU DỮ LIỆU (THÊM HOẶC SỬA)
+    // === LƯU DỮ LIỆU (THÊM HOẶC SỬA) ===
     document.getElementById('btnSaveData').onclick = async () => {
         const title = addTitle.value.trim();
         const author = addAuthor.value.trim();
-        const studentClass = addClass.value.trim();
         const advisor = addAdvisor.value.trim();
         const category = addCategory.value;
+        
+        // Gộp Hệ và Năm thành 1 chuỗi lưu vào database. VD: "Cử nhân - 2021"
+        const studentClass = `${addLevel.value} - ${addYear.value}`;
         const currentId = editId.value;
 
-        if(!title || !author || !studentClass || !advisor) {
+        if(!title || !author || !advisor) {
             return alert("Vui lòng điền đầy đủ các trường có dấu *");
         }
 
@@ -314,11 +336,9 @@
 
         try {
             if (isEditing && currentId) {
-                // Chế độ Sửa: Cập nhật Document cũ
                 await updateDoc(doc(db, "theses", currentId), dataObj);
                 alert("Đã cập nhật thành công!");
             } else {
-                // Chế độ Thêm mới: Tạo Document mới
                 await addDoc(collection(db, "theses"), dataObj);
                 alert("Đã thêm đề tài mới!");
             }
@@ -329,30 +349,37 @@
         }
     };
 
-    // 6. CHUẨN BỊ FORM ĐỂ SỬA
+    // === CHUẨN BỊ FORM ĐỂ SỬA ===
     window.triggerEdit = (encodedData) => {
         const t = JSON.parse(decodeURIComponent(encodedData));
         
-        // Đưa data lên form
         editId.value = t.id;
         addTitle.value = t.title || '';
         addAuthor.value = t.author || '';
-        addClass.value = t.studentClass || '';
         addAdvisor.value = t.advisor || '';
-        addCategory.value = t.category || 'Công nghệ phần mềm';
+        addCategory.value = t.category || 'Bộ câu hỏi';
 
-        // Đổi giao diện sang chế độ Sửa
+        // Tách chuỗi Lớp (VD: "Cử nhân - 2020") ra để map lại vào form
+        if (t.studentClass && t.studentClass.includes(' - ')) {
+            const parts = t.studentClass.split(' - ');
+            addLevel.value = parts[0];
+            populateYears(parts[0]); // Load lại danh sách năm theo hệ
+            addYear.value = parts[1];
+        } else {
+            addLevel.value = 'Cử nhân';
+            populateYears('Cử nhân');
+        }
+
         isEditing = true;
-        formTitle.innerHTML = '✏️ Sửa thông tin đề tài';
+        formTitle.innerHTML = 'Sửa thông tin đề tài';
         editModeBadge.classList.remove('hidden');
-        btnCancelEdit.classList.remove('hidden');
-        document.getElementById('btnSaveData').innerHTML = '💾 Cập nhật';
+        btnCancelEditContainer.classList.remove('hidden');
+        document.getElementById('btnSaveData').innerHTML = 'Cập nhật';
         
-        // Cuộn trang lên trên cùng để Admin thấy form
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // 7. HỦY SỬA (QUAY VỀ CHẾ ĐỘ THÊM MỚI)
+    // === HỦY SỬA ===
     btnCancelEdit.onclick = () => resetForm();
 
     function resetForm() {
@@ -360,16 +387,17 @@
         editId.value = '';
         addTitle.value = '';
         addAuthor.value = '';
-        addClass.value = '';
         addAdvisor.value = '';
+        addLevel.value = 'Cử nhân';
+        populateYears('Cử nhân'); // Reset lại năm
         
-        formTitle.innerHTML = '➕ Thêm đề tài mới';
+        formTitle.innerHTML = 'Thêm đề tài mới';
         editModeBadge.classList.add('hidden');
-        btnCancelEdit.classList.add('hidden');
-        document.getElementById('btnSaveData').innerHTML = '💾 Lưu Dữ Liệu';
+        btnCancelEditContainer.classList.add('hidden');
+        document.getElementById('btnSaveData').innerHTML = 'Lưu dữ liệu';
     }
 
-    // 8. XÓA ĐỀ TÀI
+    // === XÓA ĐỀ TÀI ===
     window.deleteThesis = async (id) => {
         if(confirm("Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa đề tài này?")) {
             try {
