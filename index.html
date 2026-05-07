@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Lưu Trữ Luận Văn</title>
+    <style>
+        /* CSS Cơ bản cho đẹp mắt */
+        body { font-family: Arial, sans-serif; background-color: #f8fafc; color: #334155; margin: 0; padding: 20px; }
+        .container { max-w-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h1 { color: #1e40af; text-align: center; }
+        input, select, button { padding: 10px; margin: 5px 0; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; }
+        input[type="text"], input[type="email"], input[type="password"] { width: calc(100% - 22px); }
+        button { background-color: #2563eb; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #1d4ed8; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
+        
+        /* Bố cục các phần */
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .section-box { background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bfdbfe; }
+        .hidden { display: none !important; }
+        
+        /* Bảng dữ liệu */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f1f5f9; }
+        .tag { background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-actions">
+        <h1>📚 Hệ Thống Luận Văn</h1>
+        <button id="btnLoginShow">Đăng nhập Admin</button>
+        <button id="btnLogout" class="btn-danger hidden">Đăng xuất</button>
+    </div>
+
+    <!-- Khung Đăng nhập (Mặc định ẩn) -->
+    <div id="loginSection" class="section-box hidden">
+        <h3>Đăng nhập Quản trị viên</h3>
+        <input type="email" id="email" placeholder="Email admin">
+        <input type="password" id="password" placeholder="Mật khẩu">
+        <button id="btnLoginSubmit">Đăng nhập</button>
+    </div>
+
+    <!-- Khung Thêm Đề Tài (Chỉ Admin mới thấy) -->
+    <div id="adminSection" class="section-box hidden">
+        <h3>➕ Thêm đề tài mới</h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="addTitle" placeholder="Tên đề tài..." style="flex: 2; min-width: 200px;">
+            <input type="text" id="addAuthor" placeholder="Tác giả" style="flex: 1; min-width: 150px;">
+            <input type="text" id="addAdvisor" placeholder="GV Hướng dẫn" style="flex: 1; min-width: 150px;">
+            <select id="addCategory" style="flex: 1;">
+                <option value="Công nghệ phần mềm">Công nghệ phần mềm</option>
+                <option value="Trí tuệ nhân tạo">Trí tuệ nhân tạo</option>
+                <option value="Hệ thống thông tin">Hệ thống thông tin</option>
+                <option value="Mạng máy tính">Mạng máy tính</option>
+            </select>
+            <button id="btnAdd">Lưu Đề Tài</button>
+        </div>
+    </div>
+
+    <!-- Tìm kiếm và Lọc -->
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <input type="text" id="searchInput" placeholder="Tìm kiếm tên đề tài, tác giả..." style="flex: 2;">
+        <select id="filterSelect" style="flex: 1;">
+            <option value="Tất cả">Tất cả chuyên ngành</option>
+            <option value="Công nghệ phần mềm">Công nghệ phần mềm</option>
+            <option value="Trí tuệ nhân tạo">Trí tuệ nhân tạo</option>
+            <option value="Hệ thống thông tin">Hệ thống thông tin</option>
+            <option value="Mạng máy tính">Mạng máy tính</option>
+        </select>
+    </div>
+
+    <!-- Bảng hiển thị -->
+    <table>
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên Đề Tài</th>
+                <th>Tác Giả</th>
+                <th>GV Hướng Dẫn</th>
+                <th>Chuyên Ngành</th>
+                <th id="thAction" class="hidden">Xóa</th>
+            </tr>
+        </thead>
+        <tbody id="dataTableBody">
+            <tr><td colspan="6" style="text-align: center;">Đang tải dữ liệu...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- NHÚNG FIREBASE BẰNG CDN (Dành cho HTML thuần) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+
+    // CẤU HÌNH CỦA BẠN
+    const firebaseConfig = {
+        apiKey: "AIzaSyDxZZRBDcb9606mNYXxXeLpgK2p1xfGF9A",
+        authDomain: "theses-3fdce.firebaseapp.com",
+        projectId: "theses-3fdce",
+        storageBucket: "theses-3fdce.firebasestorage.app",
+        messagingSenderId: "660887163293",
+        appId: "1:660887163293:web:caeaece108f6fd96cddf74",
+        measurementId: "G-5LR1NLCMT0"
+    };
+
+    // Khởi tạo Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Biến toàn cục để lưu dữ liệu và trạng thái
+    let allTheses = [];
+    let isAdmin = false;
+
+    // Các phần tử giao diện
+    const tableBody = document.getElementById('dataTableBody');
+    const loginSection = document.getElementById('loginSection');
+    const adminSection = document.getElementById('adminSection');
+    const btnLoginShow = document.getElementById('btnLoginShow');
+    const btnLogout = document.getElementById('btnLogout');
+    const thAction = document.getElementById('thAction');
+
+    // 1. LẮNG NGHE ĐĂNG NHẬP
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            isAdmin = true;
+            btnLoginShow.classList.add('hidden');
+            btnLogout.classList.remove('hidden');
+            loginSection.classList.add('hidden');
+            adminSection.classList.remove('hidden');
+            thAction.classList.remove('hidden');
+        } else {
+            isAdmin = false;
+            btnLoginShow.classList.remove('hidden');
+            btnLogout.classList.add('hidden');
+            adminSection.classList.add('hidden');
+            thAction.classList.add('hidden');
+        }
+        renderTable(); // Vẽ lại bảng (để hiện/ẩn nút Xóa)
+    });
+
+    // 2. TẢI DỮ LIỆU TỪ FIREBASE (Realtime)
+    onSnapshot(collection(db, "theses"), (snapshot) => {
+        allTheses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderTable();
+    });
+
+    // 3. HÀM VẼ BẢNG DỮ LIỆU
+    function renderTable() {
+        const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const filterCat = document.getElementById('filterSelect').value;
+
+        // Lọc dữ liệu
+        const filtered = allTheses.filter(t => {
+            const matchSearch = (t.title || '').toLowerCase().includes(searchText) || (t.author || '').toLowerCase().includes(searchText);
+            const matchCat = filterCat === 'Tất cả' || t.category === filterCat;
+            return matchSearch && matchCat;
+        });
+
+        // Vẽ HTML
+        tableBody.innerHTML = '';
+        if (filtered.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Không có dữ liệu</td></tr>';
+            return;
+        }
+
+        filtered.forEach((t, index) => {
+            const tr = document.createElement('tr');
+            
+            // Nút xóa (chỉ tạo nếu là admin)
+            let deleteBtnHtml = '';
+            if (isAdmin) {
+                deleteBtnHtml = `<td><button class="btn-danger" onclick="deleteThesis('${t.id}')">Xóa</button></td>`;
+            }
+
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td style="font-weight: bold;">${t.title}</td>
+                <td>${t.author}</td>
+                <td>${t.advisor}</td>
+                <td><span class="tag">${t.category}</span></td>
+                ${deleteBtnHtml}
+            `;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // Lắng nghe thanh tìm kiếm để lọc realtime
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('filterSelect').addEventListener('change', renderTable);
+
+    // 4. CHỨC NĂNG ĐĂNG NHẬP / ĐĂNG XUẤT
+    btnLoginShow.onclick = () => loginSection.classList.toggle('hidden');
+    
+    document.getElementById('btnLoginSubmit').onclick = () => {
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('password').value;
+        signInWithEmailAndPassword(auth, e, p).catch(err => alert("Sai email hoặc mật khẩu!"));
+    };
+
+    btnLogout.onclick = () => signOut(auth);
+
+    // 5. CHỨC NĂNG THÊM ĐỀ TÀI
+    document.getElementById('btnAdd').onclick = async () => {
+        const title = document.getElementById('addTitle').value;
+        const author = document.getElementById('addAuthor').value;
+        const advisor = document.getElementById('addAdvisor').value;
+        const category = document.getElementById('addCategory').value;
+
+        if(!title || !author) return alert("Vui lòng nhập đủ thông tin!");
+
+        try {
+            await addDoc(collection(db, "theses"), { title, author, advisor, category });
+            document.getElementById('addTitle').value = '';
+            document.getElementById('addAuthor').value = '';
+            document.getElementById('addAdvisor').value = '';
+            alert("Thêm thành công!");
+        } catch (error) {
+            alert("Lỗi! Bạn có quyền Admin chưa?");
+        }
+    };
+
+    // 6. CHỨC NĂNG XÓA (Gắn vào window để gọi từ HTML)
+    window.deleteThesis = async (id) => {
+        if(confirm("Xóa đề tài này?")) {
+            await deleteDoc(doc(db, "theses", id));
+        }
+    };
+</script>
+
+</body>
+</html>
