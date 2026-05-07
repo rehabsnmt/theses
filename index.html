@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ Thống Lưu Trữ Luận Văn</title>
+    <!-- Thư viện SheetJS để đọc file Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         /* CSS Cơ bản */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #334155; margin: 0; padding: 20px; }
@@ -51,6 +53,7 @@
         <h1 style="margin: 0;">Hệ Thống Luận Văn</h1>
         <div>
             <button id="btnLoginShow">Đăng nhập Admin</button>
+            <button id="btnOpenBulk" class="btn-warning hidden">Nhập Excel</button>
             <button id="btnLogout" class="btn-danger hidden">Đăng xuất</button>
         </div>
     </div>
@@ -61,6 +64,28 @@
         <input type="email" id="email" placeholder="Email admin" style="width: 100%;">
         <input type="password" id="password" placeholder="Mật khẩu" style="width: 100%;">
         <button id="btnLoginSubmit" style="width: 100%;">Đăng nhập</button>
+    </div>
+
+    <!-- KHUNG NHẬP HÀNG LOẠT EXCEL (Chỉ Admin mới thấy) -->
+    <div id="bulkSection" class="section-box hidden" style="background: #fffbeb; border-color: #fde68a;">
+        <h3 style="margin-top: 0; color: #b45309;">Nhập dữ liệu hàng loạt từ file Excel (.xlsx)</h3>
+        <p style="font-size: 13px; color: #78350f; margin-bottom: 15px;">
+            <strong>Cấu trúc file Excel bắt buộc:</strong> Hàng đầu tiên là tiêu đề. Dữ liệu bắt đầu từ hàng 2.<br>
+            <strong>Thứ tự cột:</strong> Cột A (Tên đề tài) | Cột B (Tác giả) | Cột C (GV Hướng dẫn) | Cột D (Phân loại) | Cột E (Lớp: VD: Cử nhân - 2024)
+        </p>
+        
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" style="display: none;">
+            <button id="btnSelectFile" style="background-color: #d97706;">Chọn file Excel</button>
+            <span id="fileNameDisplay" style="font-style: italic; color: #64748b;">Chưa chọn file</span>
+        </div>
+
+        <div>
+            <button id="btnUploadExcel" class="hidden">Bắt đầu tải lên dữ liệu</button>
+            <button id="btnCloseBulk" class="btn-danger">Đóng khung nhập Excel</button>
+        </div>
+        
+        <div id="bulkLog" style="font-size: 14px; font-weight: bold; color: #15803d; margin-top: 15px;"></div>
     </div>
 
     <!-- Khung Thêm/Sửa Đề Tài (Chỉ Admin mới thấy) -->
@@ -89,9 +114,7 @@
                         <option value="Cử nhân">Cử nhân</option>
                         <option value="Thạc sĩ">Thạc sĩ</option>
                     </select>
-                    <select id="addYear" style="width: 45%; margin: 5px 0;">
-                        <!-- JS sẽ tự động điền năm vào đây -->
-                    </select>
+                    <select id="addYear" style="width: 45%; margin: 5px 0;"></select>
                 </div>
             </div>
             <div class="form-group">
@@ -151,7 +174,7 @@
     </div>
 </div>
 
-<!-- NHÚNG FIREBASE BẰNG CDN -->
+<!-- NHÚNG FIREBASE -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
     import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
@@ -173,19 +196,21 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // Biến toàn cục
     let allTheses = [];
     let isAdmin = false;
     let isEditing = false; 
 
-    // Elements
+    // Các phần tử HTML
     const tableBody = document.getElementById('dataTableBody');
     const thAction = document.getElementById('thAction');
-    
     const loginSection = document.getElementById('loginSection');
     const adminSection = document.getElementById('adminSection');
+    const bulkSection = document.getElementById('bulkSection');
+    
     const btnLoginShow = document.getElementById('btnLoginShow');
     const btnLogout = document.getElementById('btnLogout');
+    const btnOpenBulk = document.getElementById('btnOpenBulk');
+    const btnCloseBulk = document.getElementById('btnCloseBulk');
     
     const addTitle = document.getElementById('addTitle');
     const addAuthor = document.getElementById('addAuthor');
@@ -194,13 +219,11 @@
     const addAdvisor = document.getElementById('addAdvisor');
     const addCategory = document.getElementById('addCategory');
     const editId = document.getElementById('editId');
-    
     const formTitle = document.getElementById('formTitle');
     const editModeBadge = document.getElementById('editModeBadge');
     const btnCancelEditContainer = document.getElementById('btnCancelEditContainer');
-    const btnCancelEdit = document.getElementById('btnCancelEdit');
 
-    // === LOGIC CẬP NHẬT NĂM THEO HỆ ĐÀO TẠO ===
+    // === LOGIC CẬP NHẬT NĂM ===
     function populateYears(levelType) {
         addYear.innerHTML = '';
         const currentYear = new Date().getFullYear();
@@ -212,15 +235,9 @@
             option.textContent = y;
             addYear.appendChild(option);
         }
-        addYear.value = currentYear; // Mặc định chọn năm hiện tại
+        addYear.value = currentYear; 
     }
-
-    // Khi thay đổi hệ (Cử nhân / Thạc sĩ) thì tính toán lại danh sách năm
-    addLevel.addEventListener('change', (e) => {
-        populateYears(e.target.value);
-    });
-
-    // Khởi tạo danh sách năm lúc vừa load web
+    addLevel.addEventListener('change', (e) => populateYears(e.target.value));
     populateYears('Cử nhân');
 
     // === LẮNG NGHE ĐĂNG NHẬP ===
@@ -229,6 +246,7 @@
             isAdmin = true;
             btnLoginShow.classList.add('hidden');
             btnLogout.classList.remove('hidden');
+            btnOpenBulk.classList.remove('hidden');
             loginSection.classList.add('hidden');
             adminSection.classList.remove('hidden');
             thAction.classList.remove('hidden');
@@ -237,6 +255,8 @@
             resetForm(); 
             btnLoginShow.classList.remove('hidden');
             btnLogout.classList.add('hidden');
+            btnOpenBulk.classList.add('hidden');
+            bulkSection.classList.add('hidden');
             adminSection.classList.add('hidden');
             thAction.classList.add('hidden');
         }
@@ -249,7 +269,7 @@
         renderTable();
     });
 
-    // === VẼ BẢNG & LỌC DỮ LIỆU ===
+    // === VẼ BẢNG & LỌC ===
     function renderTable() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const filterCat = document.getElementById('filterSelect').value;
@@ -274,7 +294,6 @@
 
         filtered.forEach((t, index) => {
             const tr = document.createElement('tr');
-            
             let actionHtml = '';
             if (isAdmin) {
                 const dataString = encodeURIComponent(JSON.stringify(t));
@@ -302,35 +321,28 @@
     document.getElementById('searchInput').addEventListener('input', renderTable);
     document.getElementById('filterSelect').addEventListener('change', renderTable);
 
-    // === XỬ LÝ ĐĂNG NHẬP/ĐĂNG XUẤT ===
+    // === XỬ LÝ AUTH ===
     btnLoginShow.onclick = () => loginSection.classList.toggle('hidden');
-    
     document.getElementById('btnLoginSubmit').onclick = () => {
         const e = document.getElementById('email').value;
         const p = document.getElementById('password').value;
         if(!e || !p) return alert("Nhập đủ email và mật khẩu");
-        
         signInWithEmailAndPassword(auth, e, p)
             .then(() => { document.getElementById('password').value = ''; })
             .catch(err => alert("Sai email hoặc mật khẩu!"));
     };
-
     btnLogout.onclick = () => signOut(auth);
 
-    // === LƯU DỮ LIỆU (THÊM HOẶC SỬA) ===
+    // === LƯU DỮ LIỆU LẺ (THÊM HOẶC SỬA) ===
     document.getElementById('btnSaveData').onclick = async () => {
         const title = addTitle.value.trim();
         const author = addAuthor.value.trim();
         const advisor = addAdvisor.value.trim();
         const category = addCategory.value;
-        
-        // Gộp Hệ và Năm thành 1 chuỗi lưu vào database. VD: "Cử nhân - 2021"
         const studentClass = `${addLevel.value} - ${addYear.value}`;
         const currentId = editId.value;
 
-        if(!title || !author || !advisor) {
-            return alert("Vui lòng điền đầy đủ các trường có dấu *");
-        }
+        if(!title || !author || !advisor) return alert("Vui lòng điền đầy đủ các trường có dấu *");
 
         const dataObj = { title, author, studentClass, advisor, category };
 
@@ -344,30 +356,24 @@
             }
             resetForm();
         } catch (error) {
-            console.error(error);
-            alert("Lỗi! Kiểm tra lại quyền Admin hoặc kết nối mạng.");
+            alert("Lỗi! Kiểm tra lại kết nối mạng.");
         }
     };
 
     // === CHUẨN BỊ FORM ĐỂ SỬA ===
     window.triggerEdit = (encodedData) => {
         const t = JSON.parse(decodeURIComponent(encodedData));
-        
         editId.value = t.id;
         addTitle.value = t.title || '';
         addAuthor.value = t.author || '';
         addAdvisor.value = t.advisor || '';
         addCategory.value = t.category || 'Bộ câu hỏi';
 
-        // Tách chuỗi Lớp (VD: "Cử nhân - 2020") ra để map lại vào form
         if (t.studentClass && t.studentClass.includes(' - ')) {
             const parts = t.studentClass.split(' - ');
             addLevel.value = parts[0];
-            populateYears(parts[0]); // Load lại danh sách năm theo hệ
+            populateYears(parts[0]); 
             addYear.value = parts[1];
-        } else {
-            addLevel.value = 'Cử nhân';
-            populateYears('Cử nhân');
         }
 
         isEditing = true;
@@ -376,11 +382,12 @@
         btnCancelEditContainer.classList.remove('hidden');
         document.getElementById('btnSaveData').innerHTML = 'Cập nhật';
         
+        bulkSection.classList.add('hidden'); // Ẩn phần nhập excel nếu đang mở
+        adminSection.classList.remove('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // === HỦY SỬA ===
-    btnCancelEdit.onclick = () => resetForm();
+    document.getElementById('btnCancelEdit').onclick = () => resetForm();
 
     function resetForm() {
         isEditing = false;
@@ -389,8 +396,7 @@
         addAuthor.value = '';
         addAdvisor.value = '';
         addLevel.value = 'Cử nhân';
-        populateYears('Cử nhân'); // Reset lại năm
-        
+        populateYears('Cử nhân'); 
         formTitle.innerHTML = 'Thêm đề tài mới';
         editModeBadge.classList.add('hidden');
         btnCancelEditContainer.classList.add('hidden');
@@ -400,12 +406,102 @@
     // === XÓA ĐỀ TÀI ===
     window.deleteThesis = async (id) => {
         if(confirm("Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa đề tài này?")) {
+            await deleteDoc(doc(db, "theses", id));
+        }
+    };
+
+    // ==========================================
+    // === CHỨC NĂNG NHẬP EXCEL (MỚI THÊM) ===
+    // ==========================================
+    const excelFileInput = document.getElementById('excelFile');
+    const btnSelectFile = document.getElementById('btnSelectFile');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const btnUploadExcel = document.getElementById('btnUploadExcel');
+    const bulkLog = document.getElementById('bulkLog');
+    let dataToUpload = [];
+
+    // Mở / Đóng khung nhập Excel
+    btnOpenBulk.onclick = () => {
+        bulkSection.classList.remove('hidden');
+        adminSection.classList.add('hidden'); 
+    };
+    btnCloseBulk.onclick = () => {
+        bulkSection.classList.add('hidden');
+        adminSection.classList.remove('hidden');
+    };
+
+    btnSelectFile.onclick = () => excelFileInput.click();
+
+    excelFileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        fileNameDisplay.innerText = file.name;
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Chuyển excel thành mảng 2 chiều
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            // Bỏ dòng tiêu đề (hàng đầu tiên), chỉ lấy dữ liệu
+            dataToUpload = jsonData.slice(1).filter(row => row.length > 0);
+
+            if (dataToUpload.length > 0) {
+                btnUploadExcel.classList.remove('hidden');
+                bulkLog.style.color = '#15803d';
+                bulkLog.innerText = `Đã đọc xong file. Có ${dataToUpload.length} đề tài hợp lệ. Nhấn Bắt đầu tải lên.`;
+            } else {
+                bulkLog.style.color = '#dc2626';
+                bulkLog.innerText = "File Excel trống hoặc không đúng định dạng!";
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    btnUploadExcel.onclick = async () => {
+        if (dataToUpload.length === 0) return;
+
+        btnUploadExcel.disabled = true;
+        btnUploadExcel.innerText = "Đang tải lên...";
+        let successCount = 0;
+
+        for (const row of dataToUpload) {
+            // Theo cấu trúc cột: A: Tên, B: Tác giả, C: GVHD, D: Phân loại, E: Lớp
+            const dataObj = {
+                title: row[0] ? String(row[0]).trim() : "Chưa có tên đề tài",
+                author: row[1] ? String(row[1]).trim() : "Chưa rõ",
+                advisor: row[2] ? String(row[2]).trim() : "Chưa rõ",
+                category: row[3] ? String(row[3]).trim() : "Bộ câu hỏi",
+                studentClass: row[4] ? String(row[4]).trim() : "Cử nhân - 2026"
+            };
+
             try {
-                await deleteDoc(doc(db, "theses", id));
+                await addDoc(collection(db, "theses"), dataObj);
+                successCount++;
+                bulkLog.innerText = `Đang tải lên... Hoàn thành: ${successCount} / ${dataToUpload.length}`;
             } catch (error) {
-                alert("Lỗi khi xóa dữ liệu!");
+                console.error("Lỗi dòng:", row, error);
             }
         }
+
+        alert(`Đã tải xong! ${successCount} đề tài đã được thêm vào hệ thống.`);
+        
+        // Reset giao diện tải file
+        btnUploadExcel.classList.add('hidden');
+        btnUploadExcel.disabled = false;
+        btnUploadExcel.innerText = "Bắt đầu tải lên dữ liệu";
+        fileNameDisplay.innerText = "Chưa chọn file";
+        excelFileInput.value = '';
+        dataToUpload = [];
+        
+        // Tự động đóng khung Excel và mở lại khung Admin
+        btnCloseBulk.click();
     };
 </script>
 
