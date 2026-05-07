@@ -77,7 +77,7 @@
         <h3 style="margin-top: 0; color: #b45309;">Nhập dữ liệu hàng loạt từ file Excel (.xlsx)</h3>
         <p style="font-size: 13px; color: #78350f; margin-bottom: 15px;">
             <strong>Cấu trúc file Excel bắt buộc:</strong> Hàng đầu tiên là tiêu đề. Dữ liệu bắt đầu từ hàng 2.<br>
-            <strong>Thứ tự cột:</strong> Cột A (Tác giả) | Cột B (Tên đề tài) | Cột C (GV Hướng dẫn) | Cột D (Phân loại) | Cột E (Lớp: VD: CN2020)
+            <strong>Thứ tự cột:</strong> Cột A (Tác giả) | Cột B (Tên đề tài) | Cột C (Giảng viên hướng dẫn) | Cột D (Phân loại) | Cột E (Lớp: VD: CN2020)
         </p>
         
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
@@ -124,7 +124,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>GV Hướng dẫn *</label>
+                <label>Giảng viên hướng dẫn *</label>
                 <input type="text" id="addAdvisor" placeholder="Tên giảng viên" style="width: 100%;">
             </div>
             <div class="form-group">
@@ -148,7 +148,7 @@
     <!-- Tìm kiếm và Lọc -->
     <div class="form-grid" style="background: white; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px;">
         <div class="form-group" style="grid-column: span 3;">
-            <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, tên đề tài, lớp hoặc GVHD..." style="width: 100%;">
+            <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, tên đề tài, lớp hoặc Giảng viên hướng dẫn..." style="width: 100%;">
         </div>
         <div class="form-group">
             <select id="filterSelect" style="width: 100%;">
@@ -168,7 +168,7 @@
                     <th>Tác Giả</th>
                     <th style="min-width: 250px;">Tên Đề Tài</th>
                     <th>Lớp</th>
-                    <th>GV Hướng Dẫn</th>
+                    <th>Giảng Viên Hướng Dẫn</th>
                     <th>Phân Loại</th>
                     <th id="thAction" class="hidden" style="text-align: center;">Hành động</th>
                 </tr>
@@ -233,17 +233,22 @@
     function populateYears(levelType) {
         addYear.innerHTML = '';
         const currentYear = new Date().getFullYear();
+        // Giới hạn năm cao nhất là: Năm hiện tại - 4
+        const maxYear = currentYear - 4; 
+        
         // CN bắt đầu từ 2017, THS bắt đầu từ 2019
         const startYear = (levelType === 'CN') ? 2017 : 2019;
         
-        for (let y = startYear; y <= currentYear; y++) {
+        for (let y = startYear; y <= maxYear; y++) {
             const option = document.createElement('option');
             option.value = y;
             option.textContent = y;
             addYear.appendChild(option);
         }
-        addYear.value = currentYear; 
+        // Chọn sẵn năm cao nhất trong danh sách
+        addYear.value = maxYear; 
     }
+    
     addLevel.addEventListener('change', (e) => populateYears(e.target.value));
     populateYears('CN');
 
@@ -346,7 +351,7 @@
         const author = addAuthor.value.trim();
         const advisor = addAdvisor.value.trim();
         const category = addCategory.value;
-        // Gộp định dạng lớp mới: VD: CN2020
+        // Gộp định dạng lớp: VD: CN2020
         const studentClass = `${addLevel.value}${addYear.value}`;
         const currentId = editId.value;
 
@@ -487,13 +492,13 @@
         let successCount = 0;
 
         for (const row of dataToUpload) {
-            // Theo cấu trúc cột mới: A: Tác giả, B: Tên đề tài, C: GVHD, D: Phân loại, E: Lớp
+            // Cột A: Tác giả, B: Tên đề tài, C: Giảng viên hướng dẫn, D: Phân loại, E: Lớp
             const dataObj = {
                 author: row[0] ? String(row[0]).trim() : "Chưa rõ",
                 title: row[1] ? String(row[1]).trim() : "Chưa có tên đề tài",
                 advisor: row[2] ? String(row[2]).trim() : "Chưa rõ",
                 category: row[3] ? String(row[3]).trim() : "Bộ câu hỏi",
-                studentClass: row[4] ? String(row[4]).trim() : "CN2026"
+                studentClass: row[4] ? String(row[4]).trim() : "CN2022"
             };
 
             try {
