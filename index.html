@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hệ thống quản lý luận văn - Bộ môn Phục hồi chức năng</title>
     <!-- Thư viện SheetJS để đọc file Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -12,11 +12,11 @@
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
         /* Typography */
-        .page-title { color: #1e40af; margin: 0; font-size: 26px; text-transform: uppercase; }
-        .page-subtitle { color: #475569; margin: 5px 0 0 0; font-size: 15px; font-weight: 600; }
+        .page-title { color: #1e40af; margin: 0; font-size: 26px; text-transform: uppercase; text-align: center; }
+        .page-subtitle { color: #475569; margin: 5px 0 0 0; font-size: 15px; font-weight: 600; text-align: center; }
         
         /* Form & Input */
-        input, select, button { padding: 10px 12px; margin: 5px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; }
+        input, select, button { padding: 10px 12px; margin: 5px 0; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; width: 100%; }
         input:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
         
         /* Buttons */
@@ -26,38 +26,61 @@
         .btn-danger:hover { background-color: #dc2626; }
         .btn-warning { background-color: #f59e0b; color: white; }
         .btn-warning:hover { background-color: #d97706; }
-        .btn-sm { padding: 6px 10px; font-size: 12px; margin: 2px; }
+        .btn-sm { padding: 6px 10px; font-size: 12px; margin: 2px; width: auto; display: inline-block; }
         
         /* Layout */
-        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; flex-wrap: wrap; gap: 15px; }
+        .header-title-box { flex: 1; min-width: 250px; }
+        .header-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .header-buttons button { width: auto; margin: 0; }
+        
         .section-box { background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bfdbfe; }
         .hidden { display: none !important; }
         
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; align-items: end; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 12px; font-weight: bold; color: #475569; margin-left: 5px; margin-bottom: 2px; }
+        .form-group label { font-size: 12px; font-weight: bold; color: #475569; margin-left: 2px; margin-bottom: 2px; }
         
         /* Table */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; white-space: nowrap; }
+        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #f8fafc; font-weight: 600; color: #475569; text-transform: uppercase; font-size: 13px; }
+        th { background-color: #f8fafc; font-weight: 600; color: #475569; text-transform: uppercase; font-size: 13px; position: sticky; top: 0; z-index: 10; }
         tr:hover { background-color: #f1f5f9; }
         .tag { background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
         
-        /* Modal Overlay */
+        /* Utilities */
         #editModeBadge { background-color: #f59e0b; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; vertical-align: middle; }
+        .mobile-hint { display: none; font-size: 13px; color: #64748b; font-style: italic; margin-bottom: 8px; text-align: right; }
+
+        /* TỐI ƯU HÓA MOBILE (Màn hình dưới 768px) */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            .page-title { font-size: 20px; }
+            .page-subtitle { font-size: 13px; }
+            
+            .header-actions { flex-direction: column; text-align: center; }
+            .header-buttons { justify-content: center; width: 100%; }
+            .header-buttons button { flex: 1; min-width: 45%; }
+            
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group[style*="grid-column"] { grid-column: auto !important; }
+            
+            .mobile-hint { display: block; }
+            th, td { padding: 10px; font-size: 14px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-actions">
-        <div>
+        <div class="header-title-box">
             <h1 class="page-title">Hệ thống quản lý luận văn</h1>
             <h2 class="page-subtitle">BỘ MÔN PHỤC HỒI CHỨC NĂNG</h2>
         </div>
-        <div style="display: flex; gap: 8px;">
+        <div class="header-buttons">
             <button id="btnLoginShow">Đăng nhập Quản trị viên</button>
             <button id="btnOpenBulk" class="btn-warning hidden">Nhập Excel</button>
             <button id="btnLogout" class="btn-danger hidden">Đăng xuất</button>
@@ -67,28 +90,28 @@
     <!-- Khung Đăng nhập (Mặc định ẩn) -->
     <div id="loginSection" class="section-box hidden" style="max-width: 400px; margin: 0 auto 20px auto;">
         <h3 style="margin-top: 0; text-align: center;">Đăng nhập Quản trị viên</h3>
-        <input type="email" id="email" placeholder="Email quản trị viên" style="width: 100%;">
-        <input type="password" id="password" placeholder="Mật khẩu" style="width: 100%;">
-        <button id="btnLoginSubmit" style="width: 100%;">Đăng nhập</button>
+        <input type="email" id="email" placeholder="Email quản trị viên">
+        <input type="password" id="password" placeholder="Mật khẩu">
+        <button id="btnLoginSubmit" style="margin-top: 10px;">Đăng nhập</button>
     </div>
 
     <!-- KHUNG NHẬP HÀNG LOẠT EXCEL (Chỉ Quản trị viên mới thấy) -->
     <div id="bulkSection" class="section-box hidden" style="background: #fffbeb; border-color: #fde68a;">
         <h3 style="margin-top: 0; color: #b45309;">Nhập dữ liệu hàng loạt từ file Excel (.xlsx)</h3>
-        <p style="font-size: 13px; color: #78350f; margin-bottom: 15px;">
+        <p style="font-size: 13px; color: #78350f; margin-bottom: 15px; line-height: 1.5;">
             <strong>Cấu trúc file Excel bắt buộc:</strong> Hàng đầu tiên là tiêu đề. Dữ liệu bắt đầu từ hàng 2.<br>
             <strong>Thứ tự cột:</strong> Cột A (Tác giả) | Cột B (Tên đề tài) | Cột C (Giảng viên hướng dẫn) | Cột D (Phân loại) | Cột E (Lớp: VD: CN2020)
         </p>
         
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
             <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" style="display: none;">
-            <button id="btnSelectFile" style="background-color: #d97706;">Chọn file Excel</button>
+            <button id="btnSelectFile" style="background-color: #d97706; width: auto; margin: 0;">Chọn file Excel</button>
             <span id="fileNameDisplay" style="font-style: italic; color: #64748b;">Chưa chọn file</span>
         </div>
 
-        <div>
-            <button id="btnUploadExcel" class="hidden">Bắt đầu tải lên dữ liệu</button>
-            <button id="btnCloseBulk" class="btn-danger">Đóng khung nhập Excel</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="btnUploadExcel" class="hidden" style="width: auto; margin: 0;">Bắt đầu tải lên dữ liệu</button>
+            <button id="btnCloseBulk" class="btn-danger" style="width: auto; margin: 0;">Đóng khung nhập Excel</button>
         </div>
         
         <div id="bulkLog" style="font-size: 14px; font-weight: bold; color: #15803d; margin-top: 15px;"></div>
@@ -107,60 +130,56 @@
         <div class="form-grid">
             <div class="form-group">
                 <label>Tác giả *</label>
-                <input type="text" id="addAuthor" placeholder="Họ và tên tác giả" style="width: 100%;">
+                <input type="text" id="addAuthor" placeholder="Họ và tên tác giả">
             </div>
             <div class="form-group" style="grid-column: span 2;">
                 <label>Tên đề tài *</label>
-                <input type="text" id="addTitle" placeholder="Nhập tên đề tài..." style="width: 100%;">
+                <input type="text" id="addTitle" placeholder="Nhập tên đề tài...">
             </div>
             <div class="form-group">
                 <label>Lớp *</label>
-                <div style="display: flex; gap: 5px;">
-                    <select id="addLevel" style="width: 55%; margin: 5px 0;">
+                <div style="display: flex; gap: 10px;">
+                    <select id="addLevel" style="flex: 1;">
                         <option value="CN">CN</option>
                         <option value="THS">THS</option>
                     </select>
-                    <select id="addYear" style="width: 45%; margin: 5px 0;"></select>
+                    <select id="addYear" style="flex: 1;"></select>
                 </div>
             </div>
             <div class="form-group">
                 <label>Giảng viên hướng dẫn *</label>
-                <input type="text" id="addAdvisor" placeholder="Tên giảng viên" style="width: 100%;">
+                <input type="text" id="addAdvisor" placeholder="Tên giảng viên">
             </div>
             <div class="form-group">
                 <label>Phân loại</label>
-                <select id="addCategory" style="width: 100%;">
+                <select id="addCategory">
                     <option value="Bộ câu hỏi">Bộ câu hỏi</option>
                     <option value="Khác">Khác</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>&nbsp;</label>
-                <button id="btnSaveData">Lưu dữ liệu</button>
+                <button id="btnSaveData" style="margin: 0;">Lưu dữ liệu</button>
             </div>
             <div class="form-group hidden" id="btnCancelEditContainer">
                 <label>&nbsp;</label>
-                <button id="btnCancelEdit" class="btn-danger">Hủy sửa</button>
+                <button id="btnCancelEdit" class="btn-danger" style="margin: 0;">Hủy sửa</button>
             </div>
         </div>
     </div>
 
     <!-- Tìm kiếm và Lọc -->
     <div class="form-grid" style="background: white; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px;">
-        <!-- Thanh tìm kiếm chiếm không gian lớn hơn -->
         <div class="form-group" style="grid-column: span 2;">
-            <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, tên đề tài, hoặc Giảng viên hướng dẫn..." style="width: 100%;">
+            <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, tên đề tài, hoặc Giảng viên...">
         </div>
-        <!-- Bộ lọc Lớp -->
         <div class="form-group">
-            <select id="filterClass" style="width: 100%;">
+            <select id="filterClass">
                 <option value="Tất cả">Tất cả lớp</option>
-                <!-- Dữ liệu lớp sẽ được Javascript tự động điền vào đây -->
             </select>
         </div>
-        <!-- Bộ lọc Phân loại -->
         <div class="form-group">
-            <select id="filterSelect" style="width: 100%;">
+            <select id="filterSelect">
                 <option value="Tất cả">Tất cả phân loại</option>
                 <option value="Bộ câu hỏi">Bộ câu hỏi</option>
                 <option value="Khác">Khác</option>
@@ -168,11 +187,12 @@
         </div>
     </div>
 
-    <!-- Bảng thống kê số lượng -->
-    <div style="margin-bottom: 10px; padding: 0 5px; font-size: 14px; color: #475569; display: flex; justify-content: space-between; align-items: center;">
+    <!-- Bảng thống kê số lượng & Gợi ý Mobile -->
+    <div style="margin-bottom: 10px; padding: 0 5px; font-size: 14px; color: #475569; display: flex; flex-direction: column; gap: 5px;">
         <div>
             Hiển thị <strong id="filteredCountText" style="color: #2563eb; font-size: 16px;">0</strong> trên tổng số <strong id="totalCountText" style="font-size: 16px;">0</strong> đề tài
         </div>
+        <div class="mobile-hint">👉 Vuốt sang ngang để xem bảng chi tiết</div>
     </div>
 
     <!-- Bảng hiển thị -->
@@ -180,9 +200,9 @@
         <table>
             <thead>
                 <tr>
-                    <th>STT</th>
+                    <th style="text-align: center;">STT</th>
                     <th>Tác Giả</th>
-                    <th style="min-width: 250px;">Tên Đề Tài</th>
+                    <th style="min-width: 280px;">Tên Đề Tài</th>
                     <th>Lớp</th>
                     <th>Giảng Viên Hướng Dẫn</th>
                     <th>Phân Loại</th>
@@ -246,8 +266,6 @@
     const btnCancelEditContainer = document.getElementById('btnCancelEditContainer');
     
     const filterClass = document.getElementById('filterClass'); 
-    
-    // Phần đếm số lượng
     const totalCountText = document.getElementById('totalCountText');
     const filteredCountText = document.getElementById('filteredCountText');
 
@@ -255,10 +273,7 @@
     function populateYears(levelType) {
         addYear.innerHTML = '';
         const currentYear = new Date().getFullYear();
-        // Giới hạn năm cao nhất là: Năm hiện tại - 4
         const maxYear = currentYear - 4; 
-        
-        // CN bắt đầu từ 2017, THS bắt đầu từ 2019
         const startYear = (levelType === 'CN') ? 2017 : 2019;
         
         for (let y = startYear; y <= maxYear; y++) {
@@ -340,13 +355,12 @@
             return matchSearch && matchCat && matchClass;
         });
 
-        // Cập nhật text thống kê số lượng
         totalCountText.innerText = allTheses.length;
         filteredCountText.innerText = filtered.length;
 
         tableBody.innerHTML = '';
         if (filtered.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Không tìm thấy đề tài nào phù hợp</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 30px;">Không tìm thấy đề tài nào phù hợp</td></tr>';
             return;
         }
 
@@ -363,11 +377,10 @@
                 `;
             }
 
-            // Đã thêm thuộc tính text-transform: uppercase vào thẻ <td> của tên đề tài
             tr.innerHTML = `
                 <td style="color: #94a3b8; font-weight: bold; text-align: center;">${index + 1}</td>
                 <td><span style="font-weight: 500;">${t.author}</span></td>
-                <td style="font-weight: 600; color: #0f172a; white-space: normal; line-height: 1.4; text-transform: uppercase;">${t.title}</td>
+                <td style="font-weight: 600; color: #0f172a; white-space: normal; line-height: 1.5; text-transform: uppercase;">${t.title}</td>
                 <td>${t.studentClass || '—'}</td>
                 <td>${t.advisor}</td>
                 <td><span class="tag">${t.category}</span></td>
