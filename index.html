@@ -147,9 +147,18 @@
 
     <!-- Tìm kiếm và Lọc -->
     <div class="form-grid" style="background: white; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px;">
-        <div class="form-group" style="grid-column: span 3;">
-            <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, tên đề tài, lớp hoặc Giảng viên hướng dẫn..." style="width: 100%;">
+        <!-- Thanh tìm kiếm chiếm không gian lớn hơn -->
+        <div class="form-group" style="grid-column: span 2;">
+            <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, tên đề tài, hoặc Giảng viên hướng dẫn..." style="width: 100%;">
         </div>
+        <!-- Bộ lọc Lớp -->
+        <div class="form-group">
+            <select id="filterClass" style="width: 100%;">
+                <option value="Tất cả">Tất cả lớp</option>
+                <!-- Dữ liệu lớp sẽ được Javascript tự động điền vào đây -->
+            </select>
+        </div>
+        <!-- Bộ lọc Phân loại -->
         <div class="form-group">
             <select id="filterSelect" style="width: 100%;">
                 <option value="Tất cả">Tất cả phân loại</option>
@@ -228,8 +237,10 @@
     const formTitle = document.getElementById('formTitle');
     const editModeBadge = document.getElementById('editModeBadge');
     const btnCancelEditContainer = document.getElementById('btnCancelEditContainer');
+    
+    const filterClass = document.getElementById('filterClass'); // Dropdown bộ lọc Lớp
 
-    // === LOGIC CẬP NHẬT NĂM ===
+    // === LOGIC CẬP NHẬT NĂM TRONG FORM ===
     function populateYears(levelType) {
         addYear.innerHTML = '';
         const currentYear = new Date().getFullYear();
@@ -245,7 +256,6 @@
             option.textContent = y;
             addYear.appendChild(option);
         }
-        // Chọn sẵn năm cao nhất trong danh sách
         addYear.value = maxYear; 
     }
     
@@ -275,9 +285,30 @@
         renderTable();
     });
 
+    // === TẠO TỰ ĐỘNG BỘ LỌC LỚP TỪ DỮ LIỆU ===
+    function updateClassFilterOptions() {
+        const currentSelection = filterClass.value;
+        // Quét để lấy danh sách các lớp không trùng lặp từ Firebase
+        const uniqueClasses = [...new Set(allTheses.map(t => t.studentClass).filter(Boolean))].sort();
+        
+        filterClass.innerHTML = '<option value="Tất cả">Tất cả lớp</option>';
+        uniqueClasses.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            filterClass.appendChild(opt);
+        });
+        
+        // Phục hồi lại giá trị đang chọn (nếu có)
+        if (uniqueClasses.includes(currentSelection)) {
+            filterClass.value = currentSelection;
+        }
+    }
+
     // === TẢI DỮ LIỆU TỪ FIREBASE ===
     onSnapshot(collection(db, "theses"), (snapshot) => {
         allTheses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        updateClassFilterOptions(); // Cập nhật dropdown lớp mỗi khi có dữ liệu mới
         renderTable();
     });
 
@@ -285,17 +316,21 @@
     function renderTable() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const filterCat = document.getElementById('filterSelect').value;
+        const filterCls = document.getElementById('filterClass').value; // Lấy giá trị của bộ lọc Lớp
 
         const filtered = allTheses.filter(t => {
             const txtTitle = (t.title || '').toLowerCase();
             const txtAuthor = (t.author || '').toLowerCase();
-            const txtClass = (t.studentClass || '').toLowerCase(); 
             const txtAdvisor = (t.advisor || '').toLowerCase();
             
-            const matchSearch = txtTitle.includes(searchText) || txtAuthor.includes(searchText) || txtClass.includes(searchText) || txtAdvisor.includes(searchText);
-            const matchCat = filterCat === 'Tất cả' || t.category === filterCat;
+            // Lọc văn bản (Không quét text của cột Lớp nữa vì đã có bộ lọc riêng)
+            const matchSearch = txtTitle.includes(searchText) || txtAuthor.includes(searchText) || txtAdvisor.includes(searchText);
             
-            return matchSearch && matchCat;
+            // Lọc Dropdown
+            const matchCat = filterCat === 'Tất cả' || t.category === filterCat;
+            const matchClass = filterCls === 'Tất cả' || t.studentClass === filterCls;
+            
+            return matchSearch && matchCat && matchClass;
         });
 
         tableBody.innerHTML = '';
@@ -330,8 +365,10 @@
         });
     }
 
+    // Các Event Listener cho bộ lọc
     document.getElementById('searchInput').addEventListener('input', renderTable);
     document.getElementById('filterSelect').addEventListener('change', renderTable);
+    document.getElementById('filterClass').addEventListener('change', renderTable);
 
     // === XỬ LÝ AUTH ===
     btnLoginShow.onclick = () => loginSection.classList.toggle('hidden');
