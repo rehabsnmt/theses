@@ -363,10 +363,11 @@
                 `;
             }
 
+            // Đã thêm thuộc tính text-transform: uppercase vào thẻ <td> của tên đề tài
             tr.innerHTML = `
                 <td style="color: #94a3b8; font-weight: bold; text-align: center;">${index + 1}</td>
                 <td><span style="font-weight: 500;">${t.author}</span></td>
-                <td style="font-weight: 600; color: #0f172a; white-space: normal; line-height: 1.4;">${t.title}</td>
+                <td style="font-weight: 600; color: #0f172a; white-space: normal; line-height: 1.4; text-transform: uppercase;">${t.title}</td>
                 <td>${t.studentClass || '—'}</td>
                 <td>${t.advisor}</td>
                 <td><span class="tag">${t.category}</span></td>
