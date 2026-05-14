@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hệ thống quản lý luận văn - Bộ môn Phục hồi chức năng</title>
-    <!-- Thư viện SheetJS để đọc file Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         /* CSS Cơ bản */
@@ -37,6 +36,13 @@
         .section-box { background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bfdbfe; }
         .hidden { display: none !important; }
         
+        /* Bố cục thanh Lọc & Sắp xếp */
+        .controls-container { background: white; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; }
+        .controls-grid-top { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .controls-grid-bottom { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .control-group { display: flex; flex-direction: column; }
+        .control-group label { font-size: 12px; font-weight: bold; color: #475569; margin-left: 2px; margin-bottom: 2px; }
+        
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 12px; font-weight: bold; color: #475569; margin-left: 2px; margin-bottom: 2px; }
@@ -49,11 +55,22 @@
         tr:hover { background-color: #f1f5f9; }
         .tag { background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
         
+        /* Chức năng Click Giảng viên */
+        .advisor-link { color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+        .advisor-link:hover { color: #1d4ed8; }
+        
+        /* Modal Thông tin Giảng viên */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-close { position: absolute; top: 15px; right: 15px; background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; }
+        .modal-close:hover { background: #e2e8f0; color: #0f172a; }
+        .adv-avatar { width: 80px; height: 80px; border-radius: 50%; background-color: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin-bottom: 15px; }
+        
         /* Utilities */
         #editModeBadge { background-color: #f59e0b; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; vertical-align: middle; }
         .mobile-hint { display: none; font-size: 13px; color: #64748b; font-style: italic; margin-bottom: 8px; text-align: right; }
 
-        /* TỐI ƯU HÓA MOBILE (Màn hình dưới 768px) */
+        /* TỐI ƯU HÓA MOBILE */
         @media (max-width: 768px) {
             body { padding: 10px; }
             .container { padding: 15px; }
@@ -64,8 +81,8 @@
             .header-buttons { justify-content: center; width: 100%; }
             .header-buttons button { flex: 1; min-width: 45%; }
             
+            .controls-grid-top, .controls-grid-bottom { grid-template-columns: 1fr; gap: 5px; }
             .form-grid { grid-template-columns: 1fr; }
-            .form-group[style*="grid-column"] { grid-column: auto !important; }
             
             .mobile-hint { display: block; }
             th, td { padding: 10px; font-size: 14px; }
@@ -87,7 +104,6 @@
         </div>
     </div>
 
-    <!-- Khung Đăng nhập (Mặc định ẩn) -->
     <div id="loginSection" class="section-box hidden" style="max-width: 400px; margin: 0 auto 20px auto;">
         <h3 style="margin-top: 0; text-align: center;">Đăng nhập Quản trị viên</h3>
         <input type="email" id="email" placeholder="Email quản trị viên">
@@ -95,12 +111,12 @@
         <button id="btnLoginSubmit" style="margin-top: 10px;">Đăng nhập</button>
     </div>
 
-    <!-- KHUNG NHẬP HÀNG LOẠT EXCEL (Chỉ Quản trị viên mới thấy) -->
     <div id="bulkSection" class="section-box hidden" style="background: #fffbeb; border-color: #fde68a;">
         <h3 style="margin-top: 0; color: #b45309;">Nhập dữ liệu hàng loạt từ file Excel (.xlsx)</h3>
         <p style="font-size: 13px; color: #78350f; margin-bottom: 15px; line-height: 1.5;">
             <strong>Cấu trúc file Excel bắt buộc:</strong> Hàng đầu tiên là tiêu đề. Dữ liệu bắt đầu từ hàng 2.<br>
-            <strong>Thứ tự cột:</strong> Cột A (Tác giả) | Cột B (Tên đề tài) | Cột C (Giảng viên hướng dẫn) | Cột D (Phân loại) | Cột E (Lớp: VD: CN2020)
+            <strong>Thứ tự cột:</strong> Cột A (Tác giả) | Cột B (Tên đề tài) | Cột C (Giảng viên hướng dẫn) | Cột D (Phân loại) | Cột E (Lớp: VD: CN2020)<br>
+            💡 <em>Mẹo: Nếu có 2 Giảng viên hướng dẫn, hãy dùng dấu phẩy để ngăn cách ở Cột C (VD: TS. Lê Minh Trí, ThS. Phạm Ngọc Thạch).</em>
         </p>
         
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
@@ -117,14 +133,12 @@
         <div id="bulkLog" style="font-size: 14px; font-weight: bold; color: #15803d; margin-top: 15px;"></div>
     </div>
 
-    <!-- Khung Thêm/Sửa Đề Tài (Chỉ Quản trị viên mới thấy) -->
     <div id="adminSection" class="section-box hidden">
         <h3 style="margin-top: 0;">
             <span id="formTitle">Thêm đề tài mới</span>
             <span id="editModeBadge" class="hidden">Đang sửa dữ liệu</span>
         </h3>
         
-        <!-- Lưu ID ngầm khi đang ở chế độ Sửa -->
         <input type="hidden" id="editId">
         
         <div class="form-grid">
@@ -148,7 +162,7 @@
             </div>
             <div class="form-group">
                 <label>Giảng viên hướng dẫn *</label>
-                <input type="text" id="addAdvisor" placeholder="Tên giảng viên">
+                <input type="text" id="addAdvisor" placeholder="Nếu 2 GV, cách nhau dấu phẩy (VD: GV A, GV B)">
             </div>
             <div class="form-group">
                 <label>Phân loại</label>
@@ -168,26 +182,42 @@
         </div>
     </div>
 
-    <!-- Tìm kiếm và Lọc -->
-    <div class="form-grid" style="background: white; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px;">
-        <div class="form-group" style="grid-column: span 2;">
-            <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, tên đề tài, hoặc Giảng viên...">
+    <div class="controls-container">
+        <div class="controls-grid-top">
+            <div class="control-group">
+                <label>Tìm kiếm</label>
+                <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, đề tài, hoặc Giảng viên...">
+            </div>
+            <div class="control-group">
+                <label>Sắp xếp thứ tự nội bộ</label>
+                <select id="sortSelect">
+                    <option value="title_asc" selected>Tên đề tài (A → Z)</option>
+                    <option value="title_desc">Tên đề tài (Z → A)</option>
+                    <option value="author_asc">Tác giả (A → Z)</option>
+                    <option value="author_desc">Tác giả (Z → A)</option>
+                </select>
+            </div>
         </div>
-        <div class="form-group">
-            <select id="filterClass">
-                <option value="Tất cả">Tất cả lớp</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <select id="filterSelect">
-                <option value="Tất cả">Tất cả phân loại</option>
-                <option value="Bộ câu hỏi">Bộ câu hỏi</option>
-                <option value="Khác">Khác</option>
-            </select>
+        <div class="controls-grid-bottom">
+            <div class="control-group">
+                <label>Lọc theo Lớp</label>
+                <select id="filterClass"><option value="Tất cả">Tất cả lớp</option></select>
+            </div>
+            <div class="control-group">
+                <label>Lọc theo Giảng viên</label>
+                <select id="filterAdvisor"><option value="Tất cả">Tất cả giảng viên</option></select>
+            </div>
+            <div class="control-group">
+                <label>Lọc theo Phân loại</label>
+                <select id="filterSelect">
+                    <option value="Tất cả">Tất cả phân loại</option>
+                    <option value="Bộ câu hỏi">Bộ câu hỏi</option>
+                    <option value="Khác">Khác</option>
+                </select>
+            </div>
         </div>
     </div>
 
-    <!-- Bảng thống kê số lượng & Gợi ý Mobile -->
     <div style="margin-bottom: 10px; padding: 0 5px; font-size: 14px; color: #475569; display: flex; flex-direction: column; gap: 5px;">
         <div>
             Hiển thị <strong id="filteredCountText" style="color: #2563eb; font-size: 16px;">0</strong> trên tổng số <strong id="totalCountText" style="font-size: 16px;">0</strong> đề tài
@@ -195,7 +225,6 @@
         <div class="mobile-hint">👉 Vuốt sang ngang để xem bảng chi tiết</div>
     </div>
 
-    <!-- Bảng hiển thị -->
     <div class="table-container">
         <table>
             <thead>
@@ -216,13 +245,27 @@
     </div>
 </div>
 
-<!-- NHÚNG FIREBASE -->
+<div id="advisorModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeAdvisorModal()">✕</button>
+        <div class="adv-avatar" id="modalAvatar">GV</div>
+        <h2 id="modalName" style="margin: 0 0 5px 0; color: #1e40af;">Tên GV</h2>
+        <p id="modalDegree" style="color: #64748b; font-weight: 600; margin: 0 0 15px 0; font-size: 14px;">Học hàm / Học vị</p>
+        
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 14px; line-height: 1.6;">
+            <p style="margin: 5px 0;">📧 <strong>Email:</strong> <span id="modalEmail">...</span></p>
+            <p style="margin: 5px 0;">🔬 <strong>Lĩnh vực nghiên cứu:</strong> <span id="modalResearch">...</span></p>
+            <p style="margin: 15px 0 5px 0; color: #334155;">📖 <strong>Giới thiệu:</strong></p>
+            <p id="modalBio" style="background: #f8fafc; padding: 10px; border-radius: 6px; margin: 0; color: #475569;">...</p>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
     import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
-    // CẤU HÌNH CỦA BẠN
     const firebaseConfig = {
         apiKey: "AIzaSyDxZZRBDcb9606mNYXxXeLpgK2p1xfGF9A",
         authDomain: "theses-3fdce.firebaseapp.com",
@@ -233,16 +276,38 @@
         measurementId: "G-5LR1NLCMT0"
     };
 
-    // Khởi tạo Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+
+    // ==========================================
+    // DANH SÁCH GIẢNG VIÊN CƠ HỮU (THUỘC BỘ MÔN)
+    // ==========================================
+    const internalAdvisors = {
+        "TS. Lê Minh Trí": {
+            degree: "Tiến sĩ / Trưởng bộ môn Phục hồi chức năng",
+            email: "leminhtri@ump.edu.vn",
+            research: "Phục hồi chức năng thần kinh, Đột quỵ, Đau mạn tính",
+            bio: "TS. Lê Minh Trí có hơn 15 năm kinh nghiệm giảng dạy và nghiên cứu chuyên sâu về Phục hồi chức năng thần kinh sau đột quỵ và chấn thương sọ não."
+        },
+        "ThS. Phạm Ngọc Thạch": {
+            degree: "Thạc sĩ / Giảng viên",
+            email: "phamngocthach@ump.edu.vn",
+            research: "Vật lý trị liệu cơ xương khớp, Phục hồi thể thao",
+            bio: "ThS. Phạm Ngọc Thạch tốt nghiệp chuyên ngành VLTL tại nước ngoài, chuyên phụ trách mảng phục hồi chấn thương thể thao và can thiệp cột sống."
+        },
+        "PGS.TS. Nguyễn Thị Bích": {
+            degree: "Phó Giáo sư / Tiến sĩ",
+            email: "nguyenthibich@ump.edu.vn",
+            research: "Hoạt động trị liệu, Phục hồi chức năng nhi khoa",
+            bio: "PGS.TS Nguyễn Thị Bích là chuyên gia đầu ngành trong lĩnh vực đánh giá và can thiệp Hoạt động trị liệu cho trẻ tự kỷ và bại não."
+        }
+    };
 
     let allTheses = [];
     let isAdmin = false;
     let isEditing = false; 
 
-    // Các phần tử HTML
     const tableBody = document.getElementById('dataTableBody');
     const thAction = document.getElementById('thAction');
     const loginSection = document.getElementById('loginSection');
@@ -266,10 +331,12 @@
     const btnCancelEditContainer = document.getElementById('btnCancelEditContainer');
     
     const filterClass = document.getElementById('filterClass'); 
+    const filterAdvisor = document.getElementById('filterAdvisor'); 
+    const sortSelect = document.getElementById('sortSelect'); 
     const totalCountText = document.getElementById('totalCountText');
     const filteredCountText = document.getElementById('filteredCountText');
 
-    // === LOGIC CẬP NHẬT NĂM TRONG FORM ===
+    // === LOGIC CẬP NHẬT NĂM ===
     function populateYears(levelType) {
         addYear.innerHTML = '';
         const currentYear = new Date().getFullYear();
@@ -284,7 +351,6 @@
         }
         addYear.value = maxYear; 
     }
-    
     addLevel.addEventListener('change', (e) => populateYears(e.target.value));
     populateYears('CN');
 
@@ -311,48 +377,88 @@
         renderTable();
     });
 
-    // === TẠO TỰ ĐỘNG BỘ LỌC LỚP TỪ DỮ LIỆU ===
-    function updateClassFilterOptions() {
-        const currentSelection = filterClass.value;
+    // === TỰ ĐỘNG CẬP NHẬT BỘ LỌC LỚP VÀ GIẢNG VIÊN ===
+    function updateDynamicFilters() {
+        const currClass = filterClass.value;
         const uniqueClasses = [...new Set(allTheses.map(t => t.studentClass).filter(Boolean))].sort();
-        
         filterClass.innerHTML = '<option value="Tất cả">Tất cả lớp</option>';
-        uniqueClasses.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c;
-            opt.textContent = c;
-            filterClass.appendChild(opt);
+        uniqueClasses.forEach(c => { filterClass.innerHTML += `<option value="${c}">${c}</option>`; });
+        if (uniqueClasses.includes(currClass)) filterClass.value = currClass;
+
+        const currAdv = filterAdvisor.value;
+        const allAdvs = [];
+        allTheses.forEach(t => {
+            if (t.advisor) {
+                const splitted = t.advisor.split(',').map(a => a.trim()).filter(Boolean);
+                allAdvs.push(...splitted);
+            }
         });
+        const uniqueAdvs = [...new Set(allAdvs)].sort();
         
-        if (uniqueClasses.includes(currentSelection)) {
-            filterClass.value = currentSelection;
-        }
+        filterAdvisor.innerHTML = '<option value="Tất cả">Tất cả giảng viên</option>';
+        uniqueAdvs.forEach(a => { filterAdvisor.innerHTML += `<option value="${a}">${a}</option>`; });
+        if (uniqueAdvs.includes(currAdv)) filterAdvisor.value = currAdv;
     }
 
     // === TẢI DỮ LIỆU TỪ FIREBASE ===
     onSnapshot(collection(db, "theses"), (snapshot) => {
         allTheses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        updateClassFilterOptions(); 
+        updateDynamicFilters(); 
         renderTable();
     });
 
-    // === VẼ BẢNG & LỌC ===
+    // === VẼ BẢNG, LỌC VÀ SẮP XẾP ===
     function renderTable() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const filterCat = document.getElementById('filterSelect').value;
-        const filterCls = document.getElementById('filterClass').value; 
+        const filterCls = filterClass.value; 
+        const filterAdv = filterAdvisor.value; 
+        const sortType = sortSelect.value; 
 
-        const filtered = allTheses.filter(t => {
+        // 1. Lọc dữ liệu
+        let filtered = allTheses.filter(t => {
             const txtTitle = (t.title || '').toLowerCase();
             const txtAuthor = (t.author || '').toLowerCase();
             const txtAdvisor = (t.advisor || '').toLowerCase();
             
             const matchSearch = txtTitle.includes(searchText) || txtAuthor.includes(searchText) || txtAdvisor.includes(searchText);
-            
             const matchCat = filterCat === 'Tất cả' || t.category === filterCat;
             const matchClass = filterCls === 'Tất cả' || t.studentClass === filterCls;
             
-            return matchSearch && matchCat && matchClass;
+            let matchAdv = true;
+            if (filterAdv !== 'Tất cả') {
+                const advArray = (t.advisor || '').split(',').map(a => a.trim());
+                matchAdv = advArray.includes(filterAdv);
+            }
+            
+            return matchSearch && matchCat && matchClass && matchAdv;
+        });
+
+        // 2. Sắp xếp dữ liệu LÕI: Luôn ưu tiên LỚP giảm dần trước, sau đó mới xét 1 trong 4 tiêu chí do user chọn
+        filtered.sort((a, b) => {
+            const strA_class = (a.studentClass || '').trim();
+            const strB_class = (b.studentClass || '').trim();
+            
+            // Bước 1: So sánh lớp (THS sẽ đứng trước CN, năm lớn đứng trước năm nhỏ)
+            const classComparison = strB_class.localeCompare(strA_class, 'vi');
+            
+            // Nếu hai đề tài khác lớp nhau, lập tức trả về kết quả xếp lớp (luôn ưu tiên gom cụm lớp)
+            if (classComparison !== 0) {
+                return classComparison;
+            }
+
+            // Bước 2: Nếu hai đề tài CÙNG MỘT LỚP, áp dụng 1 trong 4 tiêu chí sắp xếp chữ cái do user chọn
+            const strA_title = (a.title || '').trim();
+            const strB_title = (b.title || '').trim();
+            const strA_author = (a.author || '').trim();
+            const strB_author = (b.author || '').trim();
+
+            if (sortType === 'title_asc') return strA_title.localeCompare(strB_title, 'vi');
+            if (sortType === 'title_desc') return strB_title.localeCompare(strA_title, 'vi');
+            if (sortType === 'author_asc') return strA_author.localeCompare(strB_author, 'vi');
+            if (sortType === 'author_desc') return strB_author.localeCompare(strA_author, 'vi');
+            
+            return 0; 
         });
 
         totalCountText.innerText = allTheses.length;
@@ -377,12 +483,21 @@
                 `;
             }
 
+            const advArray = (t.advisor || '').split(',').map(a => a.trim()).filter(Boolean);
+            const advisorHtml = advArray.map(advName => {
+                if (internalAdvisors[advName]) {
+                    const safeAdvName = encodeURIComponent(advName);
+                    return `<span class="advisor-link" onclick="openAdvisorModal('${safeAdvName}')" title="Click xem thông tin GV">${advName}</span>`;
+                }
+                return advName;
+            }).join(', ');
+
             tr.innerHTML = `
                 <td style="color: #94a3b8; font-weight: bold; text-align: center;">${index + 1}</td>
                 <td><span style="font-weight: 500;">${t.author}</span></td>
                 <td style="font-weight: 600; color: #0f172a; white-space: normal; line-height: 1.5; text-transform: uppercase;">${t.title}</td>
                 <td>${t.studentClass || '—'}</td>
-                <td>${t.advisor}</td>
+                <td>${advisorHtml}</td>
                 <td><span class="tag">${t.category}</span></td>
                 ${actionHtml}
             `;
@@ -390,9 +505,36 @@
         });
     }
 
+    // Gắn Event Listeners
     document.getElementById('searchInput').addEventListener('input', renderTable);
     document.getElementById('filterSelect').addEventListener('change', renderTable);
-    document.getElementById('filterClass').addEventListener('change', renderTable);
+    filterClass.addEventListener('change', renderTable);
+    filterAdvisor.addEventListener('change', renderTable);
+    sortSelect.addEventListener('change', renderTable);
+
+    // === XỬ LÝ MODAL THÔNG TIN GIẢNG VIÊN ===
+    window.openAdvisorModal = (encodedName) => {
+        const name = decodeURIComponent(encodedName);
+        const info = internalAdvisors[name];
+        if (!info) return;
+
+        document.getElementById('modalAvatar').innerText = name.split(' ').pop().substring(0, 2).toUpperCase();
+        document.getElementById('modalName').innerText = name;
+        document.getElementById('modalDegree').innerText = info.degree || "Giảng viên bộ môn";
+        document.getElementById('modalEmail').innerText = info.email || "Chưa cập nhật";
+        document.getElementById('modalResearch').innerText = info.research || "Chưa cập nhật";
+        document.getElementById('modalBio').innerText = info.bio || "Chưa có thông tin giới thiệu.";
+
+        document.getElementById('advisorModal').classList.remove('hidden');
+    };
+
+    window.closeAdvisorModal = () => {
+        document.getElementById('advisorModal').classList.add('hidden');
+    };
+
+    document.getElementById('advisorModal').addEventListener('click', (e) => {
+        if (e.target.id === 'advisorModal') closeAdvisorModal();
+    });
 
     // === XỬ LÝ AUTH ===
     btnLoginShow.onclick = () => loginSection.classList.toggle('hidden');
@@ -406,7 +548,7 @@
     };
     btnLogout.onclick = () => signOut(auth);
 
-    // === LƯU DỮ LIỆU LẺ (THÊM HOẶC SỬA) ===
+    // === LƯU DỮ LIỆU LẺ ===
     document.getElementById('btnSaveData').onclick = async () => {
         const title = addTitle.value.trim();
         const author = addAuthor.value.trim();
@@ -433,7 +575,7 @@
         }
     };
 
-    // === CHUẨN BỊ FORM ĐỂ SỬA ===
+    // === CHUẨN BỊ FORM SỬA ===
     window.triggerEdit = (encodedData) => {
         const t = JSON.parse(decodeURIComponent(encodedData));
         editId.value = t.id;
@@ -452,7 +594,6 @@
                 lvl = 'CN';
                 yr = t.studentClass.substring(2);
             }
-            
             addLevel.value = lvl;
             populateYears(lvl); 
             if (yr) addYear.value = yr;
@@ -492,9 +633,7 @@
         }
     };
 
-    // ==========================================
     // === CHỨC NĂNG NHẬP EXCEL ===
-    // ==========================================
     const excelFileInput = document.getElementById('excelFile');
     const btnSelectFile = document.getElementById('btnSelectFile');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
@@ -523,10 +662,8 @@
         reader.onload = (event) => {
             const data = new Uint8Array(event.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
-            
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
-            
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
             dataToUpload = jsonData.slice(1).filter(row => row.length > 0);
@@ -564,7 +701,7 @@
                 successCount++;
                 bulkLog.innerText = `Đang tải lên... Hoàn thành: ${successCount} / ${dataToUpload.length}`;
             } catch (error) {
-                console.error("Lỗi dòng:", row, error);
+                console.error("Lỗi:", row, error);
             }
         }
 
