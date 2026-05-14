@@ -62,7 +62,7 @@
         th { background-color: #f8fafc; font-weight: 600; color: #475569; text-transform: uppercase; font-size: 13px; position: sticky; top: 0; z-index: 10; }
         tr:hover { background-color: #f1f5f9; }
         
-        /* TỐI ƯU CỘT HÀNH ĐỘNG GHIM CỐ ĐỊNH (STICKY RIGHT) */
+        /* GHIM CỘT HÀNH ĐỘNG CỐ ĐỊNH (STICKY RIGHT) */
         #thAction { position: sticky; right: 0; background-color: #f8fafc; z-index: 15; box-shadow: -3px 0 5px rgba(0,0,0,0.04); border-left: 1px solid #e2e8f0; }
         .td-action { position: sticky; right: 0; background-color: #ffffff; z-index: 5; box-shadow: -3px 0 5px rgba(0,0,0,0.04); border-left: 1px solid #e2e8f0; }
         tr:hover .td-action { background-color: #f1f5f9; }
@@ -574,8 +574,10 @@
             const tr = document.createElement('tr');
             let actionHtml = '';
             if (isAdmin) {
-                const dataString = encodeURIComponent(JSON.stringify(t));
-                const safeTitle = encodeURIComponent(t.title || '');
+                // Đã xử lý thay thế dấu nháy đơn triệt để để không làm lỗi Inline Javascript
+                const dataString = encodeURIComponent(JSON.stringify(t)).replace(/'/g, "%27");
+                const safeTitle = encodeURIComponent(t.title || '').replace(/'/g, "%27");
+                
                 actionHtml = `
                     <td class="td-action" style="text-align: center; white-space: nowrap;">
                         <button class="btn-sm btn-warning" onclick="triggerEdit('${dataString}')">Sửa</button>
@@ -587,7 +589,7 @@
             const advArray = (t.advisor || '').split(',').map(a => a.trim()).filter(Boolean);
             const advisorHtml = advArray.map(advName => {
                 if (internalAdvisors[advName]) {
-                    const safeAdvName = encodeURIComponent(advName);
+                    const safeAdvName = encodeURIComponent(advName).replace(/'/g, "%27");
                     return `<span class="advisor-link" onclick="openAdvisorModal('${safeAdvName}')" title="Click xem thông tin GV">${advName}</span>`;
                 }
                 return advName;
@@ -842,6 +844,7 @@
         let successCount = 0;
 
         for (const row of dataToUpload) {
+            // Cấu trúc 5 cột: A (Tác giả), B (Tên đề tài), C (GVHD), D (Lớp), E (Chuyên ngành)
             const dataObj = {
                 author: row[0] ? String(row[0]).trim() : "Chưa rõ",
                 title: row[1] ? String(row[1]).trim() : "Chưa có tên đề tài",
