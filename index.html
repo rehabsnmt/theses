@@ -14,6 +14,12 @@
         .page-title { color: #1e40af; margin: 0; font-size: 26px; text-transform: uppercase; text-align: center; }
         .page-subtitle { color: #475569; margin: 5px 0 0 0; font-size: 15px; font-weight: 600; text-align: center; }
         
+        /* Đếm lượt truy cập & Online */
+        .view-counter-wrapper { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; font-size: 14px; color: #64748b; margin-top: 12px; font-weight: 500; background: #f1f5f9; padding: 6px 15px; border-radius: 20px; width: fit-content; margin-left: auto; margin-right: auto; }
+        .view-counter-wrapper strong { color: #2563eb; }
+        .online-indicator { display: inline-block; width: 8px; height: 8px; background-color: #16a34a; border-radius: 50%; margin-right: 4px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); } }
+
         /* Form & Input */
         input[type="text"], input[type="email"], input[type="password"], select, button { padding: 10px 12px; margin: 5px 0; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; width: 100%; }
         input:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
@@ -111,6 +117,11 @@
         <div class="header-title-box">
             <h1 class="page-title">Danh sách luận văn và khóa luận tốt nghiệp</h1>
             <h2 class="page-subtitle">BỘ MÔN PHỤC HỒI CHỨC NĂNG</h2>
+            <div class="view-counter-wrapper">
+                <span title="Tổng số lượt tải trang từ trước đến nay">👁️ Tổng lượt xem: <strong id="pageViewsCount">...</strong></span>
+                <span style="margin: 0 10px; color: #cbd5e1;">|</span>
+                <span title="Số người đang mở trang lúc này"><span class="online-indicator"></span>Đang online: <strong id="onlineCount" style="color: #16a34a;">...</strong></span>
+            </div>
         </div>
         <div class="header-buttons">
             <button id="btnLoginShow">Đăng nhập Quản trị viên</button>
@@ -315,7 +326,8 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    // Thêm setDoc để cập nhật bộ đếm upsert an toàn
+    import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit, increment, setDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -331,6 +343,61 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+
+    // =========================================================================
+    // HỆ THỐNG 1: TỔNG LƯỢT XЕМ (UPSERT AN TOÀN BẰNG SETDOC MERGE)
+    // =========================================================================
+    const pageViewsDocRef = doc(db, "settings", "pageViews");
+    // Upsert: Tự động cộng 1 nếu file đã có, hoặc tạo mới file = 1 nếu chưa tồn tại
+    setDoc(pageViewsDocRef, { count: increment(1) }, { merge: true }).catch(() => {});
+
+    onSnapshot(pageViewsDocRef, (docSnap) => {
+        const countDisplay = document.getElementById('pageViewsCount');
+        if (docSnap.exists()) {
+            countDisplay.innerText = docSnap.data().count.toLocaleString('vi-VN');
+        } else {
+            countDisplay.innerText = "1";
+        }
+    });
+
+    // =========================================================================
+    // HỆ THỐNG 2: SỐ NGƯỜI ĐANG ONLINE TRỰC TIẾP (REAL-TIME PRESENCE)
+    // =========================================================================
+    // Sinh ngẫu nhiên ID định danh cho từng Tab trình duyệt
+    const currentSessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+    const presenceDocRef = doc(db, "presence", currentSessionId);
+
+    // Cập nhật mốc thời gian hoạt động mới nhất
+    function updatePresence() {
+        setDoc(presenceDocRef, { lastActive: Date.now() }).catch(() => {});
+    }
+
+    // Gửi tín hiệu online lần đầu khi vào trang
+    updatePresence();
+    // Gửi tín hiệu duy trì (heartbeat) mỗi 2 phút
+    const presenceInterval = setInterval(updatePresence, 2 * 60 * 1000);
+
+    // Xóa ngay trạng thái online khi người dùng tải sang trang khác hoặc đóng tab
+    window.addEventListener('beforeunload', () => {
+        deleteDoc(presenceDocRef).catch(() => {});
+    });
+
+    // Lắng nghe danh sách các phiên trực tuyến để đếm số người
+    onSnapshot(collection(db, "presence"), (snap) => {
+        const now = Date.now();
+        let activeUsersCount = 0;
+        
+        snap.forEach(documentItem => {
+            const data = documentItem.data();
+            // Được tính là đang Online nếu tín hiệu cuối cùng gửi đi trong vòng 3 phút đổ lại
+            if (data.lastActive && (now - data.lastActive < 3 * 60 * 1000)) {
+                activeUsersCount++;
+            }
+        });
+        
+        // Hiển thị số lượng (tối thiểu là 1 chính là bản thân người xem)
+        document.getElementById('onlineCount').innerText = Math.max(1, activeUsersCount);
+    });
 
     // DANH SÁCH GIẢNG VIÊN CƠ HỮU GỐC
     const internalAdvisors = {
@@ -574,7 +641,6 @@
             const tr = document.createElement('tr');
             let actionHtml = '';
             if (isAdmin) {
-                // Đã xử lý thay thế dấu nháy đơn triệt để để không làm lỗi Inline Javascript
                 const dataString = encodeURIComponent(JSON.stringify(t)).replace(/'/g, "%27");
                 const safeTitle = encodeURIComponent(t.title || '').replace(/'/g, "%27");
                 
@@ -844,7 +910,6 @@
         let successCount = 0;
 
         for (const row of dataToUpload) {
-            // Cấu trúc 5 cột: A (Tác giả), B (Tên đề tài), C (GVHD), D (Lớp), E (Chuyên ngành)
             const dataObj = {
                 author: row[0] ? String(row[0]).trim() : "Chưa rõ",
                 title: row[1] ? String(row[1]).trim() : "Chưa có tên đề tài",
