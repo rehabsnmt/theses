@@ -297,7 +297,6 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    // Thêm query, orderBy, limit để lấy danh sách log tối ưu
     import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
@@ -341,7 +340,7 @@
     let isAdmin = false;
     let isEditing = false; 
     let currentTab = 'CN'; 
-    let unsubLogsListener = null; // Quản lý kết nối tới Logs
+    let unsubLogsListener = null;
 
     const tableBody = document.getElementById('dataTableBody');
     const thAction = document.getElementById('thAction');
@@ -402,7 +401,16 @@
     function populateYears(levelType) {
         addYear.innerHTML = '';
         const currentYear = new Date().getFullYear();
-        const maxYear = currentYear - 4; 
+        
+        let maxYear;
+        if (levelType === 'THS') {
+            // CẬP NHẬT: Cho phép THS hiển thị đến 2024 (Hiện tại - 2)
+            maxYear = currentYear - 2; 
+        } else {
+            // GIỮ NGUYÊN: CN hiển thị đến 2022 (Hiện tại - 4)
+            maxYear = currentYear - 4; 
+        }
+        
         const startYear = (levelType === 'CN') ? 2017 : 2019;
         
         for (let y = startYear; y <= maxYear; y++) {
@@ -423,12 +431,11 @@
             btnLoginShow.classList.add('hidden');
             btnLogout.classList.remove('hidden');
             btnOpenBulk.classList.remove('hidden');
-            btnOpenHistory.classList.remove('hidden'); // Mở nút Lịch sử
+            btnOpenHistory.classList.remove('hidden');
             loginSection.classList.add('hidden');
             adminSection.classList.remove('hidden');
             thAction.classList.remove('hidden');
             
-            // Kích hoạt kết nối lắng nghe danh sách logs khi đăng nhập
             const logsQuery = query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(50));
             unsubLogsListener = onSnapshot(logsQuery, (snap) => {
                 const historyBody = document.getElementById('historyTableBody');
@@ -460,7 +467,7 @@
 
         } else {
             isAdmin = false;
-            if (unsubLogsListener) unsubLogsListener(); // Ngắt lắng nghe logs khi đăng xuất
+            if (unsubLogsListener) unsubLogsListener();
             resetForm(); 
             btnLoginShow.classList.remove('hidden');
             btnLogout.classList.add('hidden');
@@ -557,7 +564,6 @@
             let actionHtml = '';
             if (isAdmin) {
                 const dataString = encodeURIComponent(JSON.stringify(t));
-                // Encode tiêu đề để truyền vào hàm xóa nhằm ghi Log chính xác
                 const safeTitle = encodeURIComponent(t.title || '');
                 actionHtml = `
                     <td style="text-align: center; white-space: nowrap;">
@@ -798,7 +804,6 @@
             }
         }
 
-        // Ghi 1 Log duy nhất cho toàn bộ cụm tác vụ tải lên hàng loạt
         logAction("NHẬP EXCEL", `Đã đẩy lên thành công hàng loạt ${successCount} đề tài mới từ tệp: ${fileNameDisplay.innerText}`);
         
         alert(`Đã tải xong! ${successCount} đề tài đã được thêm vào hệ thống.`);
