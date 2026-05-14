@@ -21,8 +21,9 @@
         /* Buttons */
         button { background-color: #2563eb; color: white; border: none; cursor: pointer; font-weight: 600; transition: background-color 0.2s; }
         button:hover { background-color: #1d4ed8; }
+        button:disabled { background-color: #94a3b8 !important; cursor: not-allowed; }
         .btn-danger { background-color: #ef4444; }
-        .btn-danger:hover { background-color: #dc2626; }
+        .btn-danger:hover:not(:disabled) { background-color: #dc2626; }
         .btn-warning { background-color: #f59e0b; color: white; }
         .btn-warning:hover { background-color: #d97706; }
         .btn-info { background-color: #0ea5e9; color: white; }
@@ -54,12 +55,17 @@
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 12px; font-weight: bold; color: #475569; margin-left: 2px; margin-bottom: 2px; }
         
-        /* Table */
-        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #e2e8f0; }
+        /* Table & Sticky Column */
+        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #e2e8f0; position: relative; }
         table { width: 100%; border-collapse: collapse; white-space: nowrap; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
         th { background-color: #f8fafc; font-weight: 600; color: #475569; text-transform: uppercase; font-size: 13px; position: sticky; top: 0; z-index: 10; }
         tr:hover { background-color: #f1f5f9; }
+        
+        /* TỐI ƯU CỘT HÀNH ĐỘNG GHIM CỐ ĐỊNH (STICKY RIGHT) */
+        #thAction { position: sticky; right: 0; background-color: #f8fafc; z-index: 15; box-shadow: -3px 0 5px rgba(0,0,0,0.04); border-left: 1px solid #e2e8f0; }
+        .td-action { position: sticky; right: 0; background-color: #ffffff; z-index: 5; box-shadow: -3px 0 5px rgba(0,0,0,0.04); border-left: 1px solid #e2e8f0; }
+        tr:hover .td-action { background-color: #f1f5f9; }
         
         /* Chức năng Click Giảng viên */
         .advisor-link { color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; display: inline-block; margin-bottom: 3px; }
@@ -71,6 +77,9 @@
         .modal-close { position: absolute; top: 15px; right: 15px; background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; }
         .modal-close:hover { background: #e2e8f0; color: #0f172a; }
         .adv-avatar { width: 80px; height: 80px; border-radius: 50%; background-color: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin-bottom: 15px; }
+        
+        /* Xác nhận Xóa */
+        .delete-code-box { background: #f1f5f9; padding: 10px; border-radius: 6px; font-size: 20px; font-weight: bold; color: #dc2626; text-align: center; letter-spacing: 5px; margin: 10px 0; }
         
         /* Utilities */
         #editModeBadge { background-color: #f59e0b; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; vertical-align: middle; }
@@ -217,24 +226,24 @@
         </div>
     </div>
 
-    <div style="margin-bottom: 10px; padding: 0 5px; font-size: 14px; color: #475569; display: flex; flex-direction: column; gap: 5px;">
+    <div style="margin-bottom: 10px; padding: 0 5px; font-size: 14px; color: #475569; display: flex; justify-content: space-between; align-items: center;">
         <div>
             Hiển thị <strong id="filteredCountText" style="color: #2563eb; font-size: 16px;">0</strong> trên tổng số <strong id="totalCountText" style="font-size: 16px;">0</strong> đề tài thuộc hệ này
         </div>
-        <div class="mobile-hint">👉 Vuốt sang ngang để xem bảng chi tiết</div>
+        <div class="mobile-hint">👉 Vuốt ngang để xem chi tiết</div>
     </div>
 
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th style="text-align: center;">STT</th>
-                    <th>Tác Giả</th>
-                    <th style="min-width: 280px;">Tên Đề Tài</th>
-                    <th>Lớp</th>
-                    <th>Chuyên Ngành</th>
-                    <th>Giảng Viên Hướng Dẫn</th>
-                    <th id="thAction" class="hidden" style="text-align: center;">Hành động</th>
+                    <th style="text-align: center; width: 50px;">STT</th>
+                    <th style="width: 160px;">Tác Giả</th>
+                    <th style="min-width: 250px;">Tên Đề Tài</th>
+                    <th style="width: 90px;">Lớp</th>
+                    <th style="width: 150px;">Chuyên Ngành</th>
+                    <th style="min-width: 180px;">Giảng Viên Hướng Dẫn</th>
+                    <th id="thAction" class="hidden" style="text-align: center; width: 130px;">Hành động</th>
                 </tr>
             </thead>
             <tbody id="dataTableBody">
@@ -280,6 +289,26 @@
                     <tr><td colspan="4" style="text-align: center; padding: 20px;">Đang tải dữ liệu lịch sử...</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<div id="deleteConfirmModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+        <h3 style="margin-top: 0; color: #dc2626;">⚠️ Xác nhận xóa dữ liệu</h3>
+        
+        <p style="font-size: 14px; color: #334155; margin-bottom: 10px;">Bạn đang thực hiện xóa đề tài:</p>
+        <p id="deleteThesisTitlePreview" style="font-weight: bold; color: #0f172a; font-size: 15px; margin-bottom: 15px; word-break: break-word;"></p>
+        
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 5px;">Để tránh xóa nhầm, vui lòng gõ lại mã xác nhận bên dưới:</p>
+        <div class="delete-code-box" id="randomDeleteCodeDisplay">0000</div>
+        
+        <input type="text" id="inputDeleteCodeConfirm" placeholder="Nhập mã xác nhận..." style="text-align: center; font-size: 16px; letter-spacing: 2px;">
+        
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="btnExecuteFinalDelete" class="btn-danger" disabled style="flex: 1;">Xác nhận xóa</button>
+            <button onclick="closeDeleteModal()" style="flex: 1; background-color: #64748b;">Hủy bỏ</button>
         </div>
     </div>
 </div>
@@ -330,6 +359,10 @@
     let isEditing = false; 
     let currentTab = 'CN'; 
     let unsubLogsListener = null;
+    
+    let targetDeleteId = null;
+    let targetDeleteTitle = "";
+    let generatedSecurityCode = "";
 
     const tableBody = document.getElementById('dataTableBody');
     const thAction = document.getElementById('thAction');
@@ -507,7 +540,6 @@
             return matchSearch && matchClass;
         });
 
-        // Gom cụm Lớp giảm dần tuyệt đối trước, sau đó xét tiêu chí chọn
         filtered.sort((a, b) => {
             const strA_class = (a.studentClass || '').trim();
             const strB_class = (b.studentClass || '').trim();
@@ -545,9 +577,9 @@
                 const dataString = encodeURIComponent(JSON.stringify(t));
                 const safeTitle = encodeURIComponent(t.title || '');
                 actionHtml = `
-                    <td style="text-align: center; white-space: nowrap;">
+                    <td class="td-action" style="text-align: center; white-space: nowrap;">
                         <button class="btn-sm btn-warning" onclick="triggerEdit('${dataString}')">Sửa</button>
-                        <button class="btn-sm btn-danger" onclick="deleteThesis('${t.id}', '${safeTitle}')">Xóa</button>
+                        <button class="btn-sm btn-danger" onclick="triggerDeleteConfirm('${t.id}', '${safeTitle}')">Xóa</button>
                     </td>
                 `;
             }
@@ -603,6 +635,63 @@
     window.closeHistoryModal = () => document.getElementById('historyModal').classList.add('hidden');
     document.getElementById('historyModal').addEventListener('click', (e) => {
         if (e.target.id === 'historyModal') closeHistoryModal();
+    });
+
+    // === XỬ LÝ POPUP XÁC NHẬN XÓA BẰNG CODE ======
+    const deleteModal = document.getElementById('deleteConfirmModal');
+    const inputConfirm = document.getElementById('inputDeleteCodeConfirm');
+    const btnExecuteDelete = document.getElementById('btnExecuteFinalDelete');
+    const codeDisplay = document.getElementById('randomDeleteCodeDisplay');
+
+    window.triggerDeleteConfirm = (id, encodedTitle) => {
+        targetDeleteId = id;
+        targetDeleteTitle = decodeURIComponent(encodedTitle);
+        generatedSecurityCode = Math.floor(1000 + Math.random() * 9000).toString();
+        
+        document.getElementById('deleteThesisTitlePreview').innerText = targetDeleteTitle.toUpperCase();
+        codeDisplay.innerText = generatedSecurityCode;
+        inputConfirm.value = '';
+        btnExecuteDelete.disabled = true; 
+        
+        deleteModal.classList.remove('hidden');
+        inputConfirm.focus();
+    };
+
+    window.closeDeleteModal = () => {
+        deleteModal.classList.add('hidden');
+        targetDeleteId = null;
+        targetDeleteTitle = "";
+        generatedSecurityCode = "";
+    };
+
+    inputConfirm.addEventListener('input', (e) => {
+        if (e.target.value.trim() === generatedSecurityCode) {
+            btnExecuteDelete.disabled = false;
+        } else {
+            btnExecuteDelete.disabled = true;
+        }
+    });
+
+    btnExecuteDelete.onclick = async () => {
+        if (!targetDeleteId) return;
+        
+        btnExecuteDelete.disabled = true;
+        btnExecuteDelete.innerText = "Đang xóa...";
+
+        try {
+            await deleteDoc(doc(db, "theses", targetDeleteId));
+            logAction("XÓA", `Đề tài: "${targetDeleteTitle.toUpperCase()}"`);
+            closeDeleteModal();
+        } catch (error) {
+            alert("Lỗi khi thực hiện xóa dữ liệu!");
+            console.error(error);
+        } finally {
+            btnExecuteDelete.innerText = "Xác nhận xóa";
+        }
+    };
+
+    deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) closeDeleteModal();
     });
 
     // === XỬ LÝ AUTH ===
@@ -697,19 +786,6 @@
         btnCancelEditContainer.classList.add('hidden');
         document.getElementById('btnSaveData').innerHTML = 'Lưu dữ liệu';
     }
-
-    // === XÓA ĐỀ TÀI ===
-    window.deleteThesis = async (id, encodedTitle) => {
-        const title = decodeURIComponent(encodedTitle);
-        if(confirm(`Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa đề tài:\n"${title.toUpperCase()}"?`)) {
-            try {
-                await deleteDoc(doc(db, "theses", id));
-                logAction("XÓA", `Đề tài: "${title.toUpperCase()}"`);
-            } catch(e) {
-                alert("Lỗi khi thực hiện xóa!");
-            }
-        }
-    };
 
     // === CHỨC NĂNG NHẬP EXCEL ===
     const excelFileInput = document.getElementById('excelFile');
