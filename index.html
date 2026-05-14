@@ -15,7 +15,7 @@
         .page-subtitle { color: #475569; margin: 5px 0 0 0; font-size: 15px; font-weight: 600; text-align: center; }
         
         /* Form & Input */
-        input, select, button { padding: 10px 12px; margin: 5px 0; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; width: 100%; }
+        input[type="text"], input[type="email"], input[type="password"], select, button { padding: 10px 12px; margin: 5px 0; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; width: 100%; }
         input:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
         
         /* Buttons */
@@ -25,6 +25,8 @@
         .btn-danger:hover { background-color: #dc2626; }
         .btn-warning { background-color: #f59e0b; color: white; }
         .btn-warning:hover { background-color: #d97706; }
+        .btn-info { background-color: #0ea5e9; color: white; }
+        .btn-info:hover { background-color: #0284c7; }
         .btn-sm { padding: 6px 10px; font-size: 12px; margin: 2px; width: auto; display: inline-block; }
         
         /* Layout */
@@ -36,10 +38,16 @@
         .section-box { background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bfdbfe; }
         .hidden { display: none !important; }
         
+        /* Tabs Chuyển hệ */
+        .tabs-header { display: flex; border-bottom: 2px solid #cbd5e1; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; text-align: center; font-size: 16px; font-weight: bold; color: #64748b; background: none; border: none; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; margin: 0; rounded: 0; }
+        .tab-btn:hover { color: #0f172a; }
+        .tab-btn.active { color: #1e40af; border-bottom-color: #2563eb; }
+
         /* Bố cục thanh Lọc & Sắp xếp */
         .controls-container { background: white; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; }
         .controls-grid-top { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .controls-grid-bottom { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .controls-grid-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .control-group { display: flex; flex-direction: column; }
         .control-group label { font-size: 12px; font-weight: bold; color: #475569; margin-left: 2px; margin-bottom: 2px; }
         
@@ -59,7 +67,7 @@
         .advisor-link { color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; display: inline-block; margin-bottom: 3px; }
         .advisor-link:hover { color: #1d4ed8; }
         
-        /* Modal Thông tin Giảng viên */
+        /* Modals chung */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; max-height: 90vh; overflow-y: auto; }
         .modal-close { position: absolute; top: 15px; right: 15px; background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; }
@@ -79,7 +87,7 @@
             
             .header-actions { flex-direction: column; text-align: center; }
             .header-buttons { justify-content: center; width: 100%; }
-            .header-buttons button { flex: 1; min-width: 45%; }
+            .header-buttons button { flex: 1; min-width: 28%; font-size: 13px; padding: 8px; }
             
             .controls-grid-top, .controls-grid-bottom { grid-template-columns: 1fr; gap: 5px; }
             .form-grid { grid-template-columns: 1fr; }
@@ -99,6 +107,7 @@
         </div>
         <div class="header-buttons">
             <button id="btnLoginShow">Đăng nhập Quản trị viên</button>
+            <button id="btnOpenHistory" class="btn-info hidden" onclick="openHistoryModal()">Lịch sử</button>
             <button id="btnOpenBulk" class="btn-warning hidden">Nhập Excel</button>
             <button id="btnLogout" class="btn-danger hidden">Đăng xuất</button>
         </div>
@@ -182,6 +191,11 @@
         </div>
     </div>
 
+    <div class="tabs-header">
+        <button class="tab-btn active" data-tab="CN">Cử nhân (CN)</button>
+        <button class="tab-btn" data-tab="THS">Thạc sĩ (THS)</button>
+    </div>
+
     <div class="controls-container">
         <div class="controls-grid-top">
             <div class="control-group">
@@ -204,10 +218,6 @@
                 <select id="filterClass"><option value="Tất cả">Tất cả lớp</option></select>
             </div>
             <div class="control-group">
-                <label>Lọc theo Giảng viên</label>
-                <select id="filterAdvisor"><option value="Tất cả">Tất cả giảng viên</option></select>
-            </div>
-            <div class="control-group">
                 <label>Lọc theo Phân loại</label>
                 <select id="filterSelect">
                     <option value="Tất cả">Tất cả phân loại</option>
@@ -220,7 +230,7 @@
 
     <div style="margin-bottom: 10px; padding: 0 5px; font-size: 14px; color: #475569; display: flex; flex-direction: column; gap: 5px;">
         <div>
-            Hiển thị <strong id="filteredCountText" style="color: #2563eb; font-size: 16px;">0</strong> trên tổng số <strong id="totalCountText" style="font-size: 16px;">0</strong> đề tài
+            Hiển thị <strong id="filteredCountText" style="color: #2563eb; font-size: 16px;">0</strong> trên tổng số <strong id="totalCountText" style="font-size: 16px;">0</strong> đề tài thuộc hệ này
         </div>
         <div class="mobile-hint">👉 Vuốt sang ngang để xem bảng chi tiết</div>
     </div>
@@ -261,9 +271,34 @@
     </div>
 </div>
 
+<div id="historyModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 700px;">
+        <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+        <h2 style="color: #1e40af; margin-top: 0; margin-bottom: 15px;">🕒 Lịch sử hoạt động</h2>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Danh sách 50 thao tác Thêm/Sửa/Xóa gần nhất được thực hiện trên hệ thống:</p>
+        
+        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; white-space: normal;">
+                <thead>
+                    <tr>
+                        <th style="position: sticky; top: 0; background: #f1f5f9; padding: 10px; width: 130px;">Thời gian</th>
+                        <th style="position: sticky; top: 0; background: #f1f5f9; padding: 10px; width: 90px;">Thao tác</th>
+                        <th style="position: sticky; top: 0; background: #f1f5f9; padding: 10px; width: 150px;">Tài khoản</th>
+                        <th style="position: sticky; top: 0; background: #f1f5f9; padding: 10px;">Chi tiết đề tài</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <tr><td colspan="4" style="text-align: center; padding: 20px;">Đang tải dữ liệu lịch sử...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    // Thêm query, orderBy, limit để lấy danh sách log tối ưu
+    import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -280,9 +315,7 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // ==========================================
-    // DANH SÁCH GIẢNG VIÊN CƠ HỮU (THUỘC BỘ MÔN)
-    // ==========================================
+    // DANH SÁCH GIẢNG VIÊN CƠ HỮU GỐC
     const internalAdvisors = {
         "TS. Lê Minh Trí": {
             degree: "Tiến sĩ / Trưởng bộ môn Phục hồi chức năng",
@@ -307,6 +340,8 @@
     let allTheses = [];
     let isAdmin = false;
     let isEditing = false; 
+    let currentTab = 'CN'; 
+    let unsubLogsListener = null; // Quản lý kết nối tới Logs
 
     const tableBody = document.getElementById('dataTableBody');
     const thAction = document.getElementById('thAction');
@@ -317,7 +352,7 @@
     const btnLoginShow = document.getElementById('btnLoginShow');
     const btnLogout = document.getElementById('btnLogout');
     const btnOpenBulk = document.getElementById('btnOpenBulk');
-    const btnCloseBulk = document.getElementById('btnCloseBulk');
+    const btnOpenHistory = document.getElementById('btnOpenHistory');
     
     const addTitle = document.getElementById('addTitle');
     const addAuthor = document.getElementById('addAuthor');
@@ -331,12 +366,39 @@
     const btnCancelEditContainer = document.getElementById('btnCancelEditContainer');
     
     const filterClass = document.getElementById('filterClass'); 
-    const filterAdvisor = document.getElementById('filterAdvisor'); 
     const sortSelect = document.getElementById('sortSelect'); 
     const totalCountText = document.getElementById('totalCountText');
     const filteredCountText = document.getElementById('filteredCountText');
 
-    // === LOGIC CẬP NHẬT NĂM ===
+    // === HÀM GHI LOG TỰ ĐỘNG ===
+    async function logAction(actionType, detailString) {
+        if (!auth.currentUser) return;
+        try {
+            await addDoc(collection(db, "logs"), {
+                action: actionType,
+                user: auth.currentUser.email,
+                timestamp: new Date(),
+                details: detailString
+            });
+        } catch (error) {
+            console.error("Lỗi khi ghi lịch sử hoạt động:", error);
+        }
+    }
+
+    // === LOGIC XỬ LÝ CLICK CHUYỂN TAB ===
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentTab = btn.getAttribute('data-tab'); 
+            filterClass.value = 'Tất cả';
+            updateDynamicFilters(); 
+            renderTable();
+        });
+    });
+
+    // === LOGIC CẬP NHẬT NĂM FORM ===
     function populateYears(levelType) {
         addYear.innerHTML = '';
         const currentYear = new Date().getFullYear();
@@ -361,15 +423,49 @@
             btnLoginShow.classList.add('hidden');
             btnLogout.classList.remove('hidden');
             btnOpenBulk.classList.remove('hidden');
+            btnOpenHistory.classList.remove('hidden'); // Mở nút Lịch sử
             loginSection.classList.add('hidden');
             adminSection.classList.remove('hidden');
             thAction.classList.remove('hidden');
+            
+            // Kích hoạt kết nối lắng nghe danh sách logs khi đăng nhập
+            const logsQuery = query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(50));
+            unsubLogsListener = onSnapshot(logsQuery, (snap) => {
+                const historyBody = document.getElementById('historyTableBody');
+                historyBody.innerHTML = '';
+                if (snap.empty) {
+                    historyBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Hệ thống chưa ghi nhận hoạt động nào</td></tr>';
+                    return;
+                }
+                snap.forEach(docItem => {
+                    const log = docItem.data();
+                    const timeStr = log.timestamp ? log.timestamp.toDate().toLocaleString('vi-VN') : '';
+                    
+                    let badgeColor = '#64748b';
+                    if (log.action === 'THÊM') badgeColor = '#16a34a';
+                    if (log.action === 'SỬA') badgeColor = '#d97706';
+                    if (log.action === 'XÓA') badgeColor = '#dc2626';
+                    if (log.action === 'NHẬP EXCEL') badgeColor = '#2563eb';
+
+                    historyBody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 10px; color: #64748b;">${timeStr}</td>
+                            <td style="padding: 10px; font-weight: bold; color: ${badgeColor};">${log.action}</td>
+                            <td style="padding: 10px; color: #0f172a; word-break: break-all;">${log.user}</td>
+                            <td style="padding: 10px; color: #334155;">${log.details}</td>
+                        </tr>
+                    `;
+                });
+            });
+
         } else {
             isAdmin = false;
+            if (unsubLogsListener) unsubLogsListener(); // Ngắt lắng nghe logs khi đăng xuất
             resetForm(); 
             btnLoginShow.classList.remove('hidden');
             btnLogout.classList.add('hidden');
             btnOpenBulk.classList.add('hidden');
+            btnOpenHistory.classList.add('hidden');
             bulkSection.classList.add('hidden');
             adminSection.classList.add('hidden');
             thAction.classList.add('hidden');
@@ -377,27 +473,23 @@
         renderTable();
     });
 
-    // === TỰ ĐỘNG CẬP NHẬT BỘ LỌC LỚP VÀ GIẢNG VIÊN ===
+    // === TỰ ĐỘNG CẬP NHẬT BỘ LỌC LỚP ===
     function updateDynamicFilters() {
         const currClass = filterClass.value;
-        const uniqueClasses = [...new Set(allTheses.map(t => t.studentClass).filter(Boolean))].sort();
+        const tabClasses = allTheses
+            .map(t => (t.studentClass || '').trim())
+            .filter(c => c.startsWith(currentTab));
+            
+        const uniqueClasses = [...new Set(tabClasses)].sort();
+        
         filterClass.innerHTML = '<option value="Tất cả">Tất cả lớp</option>';
         uniqueClasses.forEach(c => { filterClass.innerHTML += `<option value="${c}">${c}</option>`; });
-        if (uniqueClasses.includes(currClass)) filterClass.value = currClass;
-
-        const currAdv = filterAdvisor.value;
-        const allAdvs = [];
-        allTheses.forEach(t => {
-            if (t.advisor) {
-                const splitted = t.advisor.split(',').map(a => a.trim()).filter(Boolean);
-                allAdvs.push(...splitted);
-            }
-        });
-        const uniqueAdvs = [...new Set(allAdvs)].sort();
         
-        filterAdvisor.innerHTML = '<option value="Tất cả">Tất cả giảng viên</option>';
-        uniqueAdvs.forEach(a => { filterAdvisor.innerHTML += `<option value="${a}">${a}</option>`; });
-        if (uniqueAdvs.includes(currAdv)) filterAdvisor.value = currAdv;
+        if (uniqueClasses.includes(currClass)) {
+            filterClass.value = currClass;
+        } else {
+            filterClass.value = 'Tất cả';
+        }
     }
 
     // === TẢI DỮ LIỆU TỪ FIREBASE ===
@@ -412,42 +504,31 @@
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const filterCat = document.getElementById('filterSelect').value;
         const filterCls = filterClass.value; 
-        const filterAdv = filterAdvisor.value; 
         const sortType = sortSelect.value; 
 
-        // 1. Lọc dữ liệu
         let filtered = allTheses.filter(t => {
+            const classStr = (t.studentClass || '').trim();
+            if (!classStr.startsWith(currentTab)) return false;
+
             const txtTitle = (t.title || '').toLowerCase();
             const txtAuthor = (t.author || '').toLowerCase();
             const txtAdvisor = (t.advisor || '').toLowerCase();
             
             const matchSearch = txtTitle.includes(searchText) || txtAuthor.includes(searchText) || txtAdvisor.includes(searchText);
             const matchCat = filterCat === 'Tất cả' || t.category === filterCat;
-            const matchClass = filterCls === 'Tất cả' || t.studentClass === filterCls;
+            const matchClass = filterCls === 'Tất cả' || classStr === filterCls;
             
-            let matchAdv = true;
-            if (filterAdv !== 'Tất cả') {
-                const advArray = (t.advisor || '').split(',').map(a => a.trim());
-                matchAdv = advArray.includes(filterAdv);
-            }
-            
-            return matchSearch && matchCat && matchClass && matchAdv;
+            return matchSearch && matchCat && matchClass;
         });
 
-        // 2. Sắp xếp dữ liệu LÕI: Luôn ưu tiên LỚP giảm dần trước, sau đó mới xét 1 trong 4 tiêu chí do user chọn
+        // Gom cụm Lớp giảm dần tuyệt đối trước, sau đó xét tiêu chí chọn
         filtered.sort((a, b) => {
             const strA_class = (a.studentClass || '').trim();
             const strB_class = (b.studentClass || '').trim();
             
-            // Bước 1: So sánh lớp (THS sẽ đứng trước CN, năm lớn đứng trước năm nhỏ)
             const classComparison = strB_class.localeCompare(strA_class, 'vi');
-            
-            // Nếu hai đề tài khác lớp nhau, lập tức trả về kết quả xếp lớp (luôn ưu tiên gom cụm lớp)
-            if (classComparison !== 0) {
-                return classComparison;
-            }
+            if (classComparison !== 0) return classComparison;
 
-            // Bước 2: Nếu hai đề tài CÙNG MỘT LỚP, áp dụng 1 trong 4 tiêu chí sắp xếp chữ cái do user chọn
             const strA_title = (a.title || '').trim();
             const strB_title = (b.title || '').trim();
             const strA_author = (a.author || '').trim();
@@ -461,7 +542,8 @@
             return 0; 
         });
 
-        totalCountText.innerText = allTheses.length;
+        const tabTotalCount = allTheses.filter(t => (t.studentClass || '').trim().startsWith(currentTab)).length;
+        totalCountText.innerText = tabTotalCount;
         filteredCountText.innerText = filtered.length;
 
         tableBody.innerHTML = '';
@@ -475,15 +557,16 @@
             let actionHtml = '';
             if (isAdmin) {
                 const dataString = encodeURIComponent(JSON.stringify(t));
+                // Encode tiêu đề để truyền vào hàm xóa nhằm ghi Log chính xác
+                const safeTitle = encodeURIComponent(t.title || '');
                 actionHtml = `
                     <td style="text-align: center; white-space: nowrap;">
                         <button class="btn-sm btn-warning" onclick="triggerEdit('${dataString}')">Sửa</button>
-                        <button class="btn-sm btn-danger" onclick="deleteThesis('${t.id}')">Xóa</button>
+                        <button class="btn-sm btn-danger" onclick="deleteThesis('${t.id}', '${safeTitle}')">Xóa</button>
                     </td>
                 `;
             }
 
-            // Tách các Giảng viên và ngắt mỗi người xuống 1 dòng bằng thẻ <br>
             const advArray = (t.advisor || '').split(',').map(a => a.trim()).filter(Boolean);
             const advisorHtml = advArray.map(advName => {
                 if (internalAdvisors[advName]) {
@@ -491,7 +574,7 @@
                     return `<span class="advisor-link" onclick="openAdvisorModal('${safeAdvName}')" title="Click xem thông tin GV">${advName}</span>`;
                 }
                 return advName;
-            }).join('<br>'); // Sử dụng <br> để ngắt dòng nếu có 2 GV trở lên
+            }).join('<br>');
 
             tr.innerHTML = `
                 <td style="color: #94a3b8; font-weight: bold; text-align: center;">${index + 1}</td>
@@ -506,11 +589,9 @@
         });
     }
 
-    // Gắn Event Listeners
     document.getElementById('searchInput').addEventListener('input', renderTable);
     document.getElementById('filterSelect').addEventListener('change', renderTable);
     filterClass.addEventListener('change', renderTable);
-    filterAdvisor.addEventListener('change', renderTable);
     sortSelect.addEventListener('change', renderTable);
 
     // === XỬ LÝ MODAL THÔNG TIN GIẢNG VIÊN ===
@@ -528,13 +609,16 @@
 
         document.getElementById('advisorModal').classList.remove('hidden');
     };
-
-    window.closeAdvisorModal = () => {
-        document.getElementById('advisorModal').classList.add('hidden');
-    };
-
+    window.closeAdvisorModal = () => document.getElementById('advisorModal').classList.add('hidden');
     document.getElementById('advisorModal').addEventListener('click', (e) => {
         if (e.target.id === 'advisorModal') closeAdvisorModal();
+    });
+
+    // === XỬ LÝ MODAL LỊCH SỬ HOẠT ĐỘNG ===
+    window.openHistoryModal = () => document.getElementById('historyModal').classList.remove('hidden');
+    window.closeHistoryModal = () => document.getElementById('historyModal').classList.add('hidden');
+    document.getElementById('historyModal').addEventListener('click', (e) => {
+        if (e.target.id === 'historyModal') closeHistoryModal();
     });
 
     // === XỬ LÝ AUTH ===
@@ -549,7 +633,7 @@
     };
     btnLogout.onclick = () => signOut(auth);
 
-    // === LƯU DỮ LIỆU LẺ ===
+    // === LƯU DỮ LIỆU LẺ (THÊM HOẶC SỬA) ===
     document.getElementById('btnSaveData').onclick = async () => {
         const title = addTitle.value.trim();
         const author = addAuthor.value.trim();
@@ -565,9 +649,11 @@
         try {
             if (isEditing && currentId) {
                 await updateDoc(doc(db, "theses", currentId), dataObj);
+                logAction("SỬA", `Lớp: ${studentClass} | Đề tài: "${title.toUpperCase()}" | Tác giả: ${author}`);
                 alert("Đã cập nhật thành công!");
             } else {
                 await addDoc(collection(db, "theses"), dataObj);
+                logAction("THÊM", `Lớp: ${studentClass} | Đề tài: "${title.toUpperCase()}" | Tác giả: ${author}`);
                 alert("Đã thêm đề tài mới!");
             }
             resetForm();
@@ -628,9 +714,15 @@
     }
 
     // === XÓA ĐỀ TÀI ===
-    window.deleteThesis = async (id) => {
-        if(confirm("Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa đề tài này?")) {
-            await deleteDoc(doc(db, "theses", id));
+    window.deleteThesis = async (id, encodedTitle) => {
+        const title = decodeURIComponent(encodedTitle);
+        if(confirm(`Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa đề tài:\n"${title.toUpperCase()}"?`)) {
+            try {
+                await deleteDoc(doc(db, "theses", id));
+                logAction("XÓA", `Đề tài: "${title.toUpperCase()}"`);
+            } catch(e) {
+                alert("Lỗi khi thực hiện xóa!");
+            }
         }
     };
 
@@ -706,6 +798,9 @@
             }
         }
 
+        // Ghi 1 Log duy nhất cho toàn bộ cụm tác vụ tải lên hàng loạt
+        logAction("NHẬP EXCEL", `Đã đẩy lên thành công hàng loạt ${successCount} đề tài mới từ tệp: ${fileNameDisplay.innerText}`);
+        
         alert(`Đã tải xong! ${successCount} đề tài đã được thêm vào hệ thống.`);
         
         btnUploadExcel.classList.add('hidden');
