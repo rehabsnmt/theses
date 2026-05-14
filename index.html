@@ -50,13 +50,13 @@
         /* Table */
         .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #e2e8f0; }
         table { width: 100%; border-collapse: collapse; white-space: nowrap; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
         th { background-color: #f8fafc; font-weight: 600; color: #475569; text-transform: uppercase; font-size: 13px; position: sticky; top: 0; z-index: 10; }
         tr:hover { background-color: #f1f5f9; }
         .tag { background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
         
         /* Chức năng Click Giảng viên */
-        .advisor-link { color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+        .advisor-link { color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; display: inline-block; margin-bottom: 3px; }
         .advisor-link:hover { color: #1d4ed8; }
         
         /* Modal Thông tin Giảng viên */
@@ -483,6 +483,7 @@
                 `;
             }
 
+            // Tách các Giảng viên và ngắt mỗi người xuống 1 dòng bằng thẻ <br>
             const advArray = (t.advisor || '').split(',').map(a => a.trim()).filter(Boolean);
             const advisorHtml = advArray.map(advName => {
                 if (internalAdvisors[advName]) {
@@ -490,7 +491,7 @@
                     return `<span class="advisor-link" onclick="openAdvisorModal('${safeAdvName}')" title="Click xem thông tin GV">${advName}</span>`;
                 }
                 return advName;
-            }).join(', ');
+            }).join('<br>'); // Sử dụng <br> để ngắt dòng nếu có 2 GV trở lên
 
             tr.innerHTML = `
                 <td style="color: #94a3b8; font-weight: bold; text-align: center;">${index + 1}</td>
