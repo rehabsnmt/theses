@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hệ thống quản lý luận văn - Bộ môn Phục hồi chức năng</title>
+    <title>Danh sách luận văn và khóa luận tốt nghiệp - Bộ môn Phục hồi chức năng</title>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         /* CSS Cơ bản */
@@ -40,14 +40,13 @@
         
         /* Tabs Chuyển hệ */
         .tabs-header { display: flex; border-bottom: 2px solid #cbd5e1; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 12px; text-align: center; font-size: 16px; font-weight: bold; color: #64748b; background: none; border: none; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; margin: 0; rounded: 0; }
+        .tab-btn { flex: 1; padding: 12px; text-align: center; font-size: 16px; font-weight: bold; color: #64748b; background: none; border: none; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; margin: 0; }
         .tab-btn:hover { color: #0f172a; }
         .tab-btn.active { color: #1e40af; border-bottom-color: #2563eb; }
 
-        /* Bố cục thanh Lọc & Sắp xếp */
+        /* Bố cục thanh Lọc & Sắp xếp ngang */
         .controls-container { background: white; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; }
-        .controls-grid-top { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .controls-grid-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .controls-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; }
         .control-group { display: flex; flex-direction: column; }
         .control-group label { font-size: 12px; font-weight: bold; color: #475569; margin-left: 2px; margin-bottom: 2px; }
         
@@ -61,7 +60,6 @@
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
         th { background-color: #f8fafc; font-weight: 600; color: #475569; text-transform: uppercase; font-size: 13px; position: sticky; top: 0; z-index: 10; }
         tr:hover { background-color: #f1f5f9; }
-        .tag { background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
         
         /* Chức năng Click Giảng viên */
         .advisor-link { color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; display: inline-block; margin-bottom: 3px; }
@@ -89,7 +87,7 @@
             .header-buttons { justify-content: center; width: 100%; }
             .header-buttons button { flex: 1; min-width: 28%; font-size: 13px; padding: 8px; }
             
-            .controls-grid-top, .controls-grid-bottom { grid-template-columns: 1fr; gap: 5px; }
+            .controls-grid { grid-template-columns: 1fr; gap: 5px; }
             .form-grid { grid-template-columns: 1fr; }
             
             .mobile-hint { display: block; }
@@ -102,7 +100,7 @@
 <div class="container">
     <div class="header-actions">
         <div class="header-title-box">
-            <h1 class="page-title">Hệ thống quản lý luận văn</h1>
+            <h1 class="page-title">Danh sách luận văn và khóa luận tốt nghiệp</h1>
             <h2 class="page-subtitle">BỘ MÔN PHỤC HỒI CHỨC NĂNG</h2>
         </div>
         <div class="header-buttons">
@@ -124,7 +122,7 @@
         <h3 style="margin-top: 0; color: #b45309;">Nhập dữ liệu hàng loạt từ file Excel (.xlsx)</h3>
         <p style="font-size: 13px; color: #78350f; margin-bottom: 15px; line-height: 1.5;">
             <strong>Cấu trúc file Excel bắt buộc:</strong> Hàng đầu tiên là tiêu đề. Dữ liệu bắt đầu từ hàng 2.<br>
-            <strong>Thứ tự cột:</strong> Cột A (Tác giả) | Cột B (Tên đề tài) | Cột C (Giảng viên hướng dẫn) | Cột D (Phân loại) | Cột E (Lớp: VD: CN2020)<br>
+            <strong>Thứ tự cột:</strong> Cột A (Tác giả) | Cột B (Tên đề tài) | Cột C (Giảng viên hướng dẫn) | Cột D (Lớp) | Cột E (Chuyên ngành)<br>
             💡 <em>Mẹo: Nếu có 2 Giảng viên hướng dẫn, hãy dùng dấu phẩy để ngăn cách ở Cột C (VD: TS. Lê Minh Trí, ThS. Phạm Ngọc Thạch).</em>
         </p>
         
@@ -170,15 +168,16 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>Giảng viên hướng dẫn *</label>
-                <input type="text" id="addAdvisor" placeholder="Nếu 2 GV, cách nhau dấu phẩy (VD: GV A, GV B)">
+                <label>Chuyên ngành</label>
+                <select id="addMajor">
+                    <option value="Vật lý trị liệu">Vật lý trị liệu</option>
+                    <option value="Hoạt động trị liệu">Hoạt động trị liệu</option>
+                    <option value="Ngôn ngữ trị liệu">Ngôn ngữ trị liệu</option>
+                </select>
             </div>
             <div class="form-group">
-                <label>Phân loại</label>
-                <select id="addCategory">
-                    <option value="Bộ câu hỏi">Bộ câu hỏi</option>
-                    <option value="Khác">Khác</option>
-                </select>
+                <label>Giảng viên hướng dẫn *</label>
+                <input type="text" id="addAdvisor" placeholder="Nếu 2 GV, cách nhau dấu phẩy">
             </div>
             <div class="form-group">
                 <label>&nbsp;</label>
@@ -197,10 +196,10 @@
     </div>
 
     <div class="controls-container">
-        <div class="controls-grid-top">
+        <div class="controls-grid">
             <div class="control-group">
                 <label>Tìm kiếm</label>
-                <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, đề tài, hoặc Giảng viên...">
+                <input type="text" id="searchInput" placeholder="Tìm kiếm theo tác giả, đề tài, GV hoặc chuyên ngành...">
             </div>
             <div class="control-group">
                 <label>Sắp xếp thứ tự nội bộ</label>
@@ -211,19 +210,9 @@
                     <option value="author_desc">Tác giả (Z → A)</option>
                 </select>
             </div>
-        </div>
-        <div class="controls-grid-bottom">
             <div class="control-group">
                 <label>Lọc theo Lớp</label>
                 <select id="filterClass"><option value="Tất cả">Tất cả lớp</option></select>
-            </div>
-            <div class="control-group">
-                <label>Lọc theo Phân loại</label>
-                <select id="filterSelect">
-                    <option value="Tất cả">Tất cả phân loại</option>
-                    <option value="Bộ câu hỏi">Bộ câu hỏi</option>
-                    <option value="Khác">Khác</option>
-                </select>
             </div>
         </div>
     </div>
@@ -243,8 +232,8 @@
                     <th>Tác Giả</th>
                     <th style="min-width: 280px;">Tên Đề Tài</th>
                     <th>Lớp</th>
+                    <th>Chuyên Ngành</th>
                     <th>Giảng Viên Hướng Dẫn</th>
-                    <th>Phân Loại</th>
                     <th id="thAction" class="hidden" style="text-align: center;">Hành động</th>
                 </tr>
             </thead>
@@ -357,8 +346,8 @@
     const addAuthor = document.getElementById('addAuthor');
     const addLevel = document.getElementById('addLevel');
     const addYear = document.getElementById('addYear');
+    const addMajor = document.getElementById('addMajor');
     const addAdvisor = document.getElementById('addAdvisor');
-    const addCategory = document.getElementById('addCategory');
     const editId = document.getElementById('editId');
     const formTitle = document.getElementById('formTitle');
     const editModeBadge = document.getElementById('editModeBadge');
@@ -401,16 +390,7 @@
     function populateYears(levelType) {
         addYear.innerHTML = '';
         const currentYear = new Date().getFullYear();
-        
-        let maxYear;
-        if (levelType === 'THS') {
-            // CẬP NHẬT: Cho phép THS hiển thị đến 2024 (Hiện tại - 2)
-            maxYear = currentYear - 2; 
-        } else {
-            // GIỮ NGUYÊN: CN hiển thị đến 2022 (Hiện tại - 4)
-            maxYear = currentYear - 4; 
-        }
-        
+        let maxYear = (levelType === 'THS') ? currentYear - 2 : currentYear - 4; 
         const startYear = (levelType === 'CN') ? 2017 : 2019;
         
         for (let y = startYear; y <= maxYear; y++) {
@@ -509,7 +489,6 @@
     // === VẼ BẢNG, LỌC VÀ SẮP XẾP ===
     function renderTable() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
-        const filterCat = document.getElementById('filterSelect').value;
         const filterCls = filterClass.value; 
         const sortType = sortSelect.value; 
 
@@ -520,12 +499,12 @@
             const txtTitle = (t.title || '').toLowerCase();
             const txtAuthor = (t.author || '').toLowerCase();
             const txtAdvisor = (t.advisor || '').toLowerCase();
+            const txtMajor = (t.major || '').toLowerCase();
             
-            const matchSearch = txtTitle.includes(searchText) || txtAuthor.includes(searchText) || txtAdvisor.includes(searchText);
-            const matchCat = filterCat === 'Tất cả' || t.category === filterCat;
+            const matchSearch = txtTitle.includes(searchText) || txtAuthor.includes(searchText) || txtAdvisor.includes(searchText) || txtMajor.includes(searchText);
             const matchClass = filterCls === 'Tất cả' || classStr === filterCls;
             
-            return matchSearch && matchCat && matchClass;
+            return matchSearch && matchClass;
         });
 
         // Gom cụm Lớp giảm dần tuyệt đối trước, sau đó xét tiêu chí chọn
@@ -587,8 +566,8 @@
                 <td><span style="font-weight: 500;">${t.author}</span></td>
                 <td style="font-weight: 600; color: #0f172a; white-space: normal; line-height: 1.5; text-transform: uppercase;">${t.title}</td>
                 <td>${t.studentClass || '—'}</td>
+                <td><span style="color: #0284c7; font-weight: 500;">${t.major || '—'}</span></td>
                 <td>${advisorHtml}</td>
-                <td><span class="tag">${t.category}</span></td>
                 ${actionHtml}
             `;
             tableBody.appendChild(tr);
@@ -596,7 +575,6 @@
     }
 
     document.getElementById('searchInput').addEventListener('input', renderTable);
-    document.getElementById('filterSelect').addEventListener('change', renderTable);
     filterClass.addEventListener('change', renderTable);
     sortSelect.addEventListener('change', renderTable);
 
@@ -644,22 +622,22 @@
         const title = addTitle.value.trim();
         const author = addAuthor.value.trim();
         const advisor = addAdvisor.value.trim();
-        const category = addCategory.value;
+        const major = addMajor.value;
         const studentClass = `${addLevel.value}${addYear.value}`;
         const currentId = editId.value;
 
         if(!title || !author || !advisor) return alert("Vui lòng điền đầy đủ các trường có dấu *");
 
-        const dataObj = { title, author, studentClass, advisor, category };
+        const dataObj = { title, author, studentClass, major, advisor };
 
         try {
             if (isEditing && currentId) {
                 await updateDoc(doc(db, "theses", currentId), dataObj);
-                logAction("SỬA", `Lớp: ${studentClass} | Đề tài: "${title.toUpperCase()}" | Tác giả: ${author}`);
+                logAction("SỬA", `Lớp: ${studentClass} (${major}) | Đề tài: "${title.toUpperCase()}" | Tác giả: ${author}`);
                 alert("Đã cập nhật thành công!");
             } else {
                 await addDoc(collection(db, "theses"), dataObj);
-                logAction("THÊM", `Lớp: ${studentClass} | Đề tài: "${title.toUpperCase()}" | Tác giả: ${author}`);
+                logAction("THÊM", `Lớp: ${studentClass} (${major}) | Đề tài: "${title.toUpperCase()}" | Tác giả: ${author}`);
                 alert("Đã thêm đề tài mới!");
             }
             resetForm();
@@ -675,7 +653,7 @@
         addTitle.value = t.title || '';
         addAuthor.value = t.author || '';
         addAdvisor.value = t.advisor || '';
-        addCategory.value = t.category || 'Bộ câu hỏi';
+        addMajor.value = t.major || 'Vật lý trị liệu';
 
         if (t.studentClass) {
             let lvl = 'CN';
@@ -711,6 +689,7 @@
         addTitle.value = '';
         addAuthor.value = '';
         addAdvisor.value = '';
+        addMajor.value = 'Vật lý trị liệu';
         addLevel.value = 'CN';
         populateYears('CN'); 
         formTitle.innerHTML = 'Thêm đề tài mới';
@@ -791,8 +770,8 @@
                 author: row[0] ? String(row[0]).trim() : "Chưa rõ",
                 title: row[1] ? String(row[1]).trim() : "Chưa có tên đề tài",
                 advisor: row[2] ? String(row[2]).trim() : "Chưa rõ",
-                category: row[3] ? String(row[3]).trim() : "Bộ câu hỏi",
-                studentClass: row[4] ? String(row[4]).trim() : "CN2022"
+                studentClass: row[3] ? String(row[3]).trim() : "CN2022",
+                major: row[4] ? String(row[4]).trim() : "Vật lý trị liệu"
             };
 
             try {
